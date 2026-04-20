@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebEmu</title>
+  <link rel="stylesheet" href="index-css.css">
+  <link rel="stylesheet" href="color.css">
+  <script src="./Scripts/global.js"></script>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-brand">WebEmu</div>
+    <a href="index.html" class="active">Home</a>
+    <a href="raw.html">Consoles</a>
+    <a href="collection.html">Collection</a>
+    <a href="faq.html">FAQ</a>
+    <div class="nav-right">
+      <button class="dark-toggle" id="themeToggle">T</button>
+    </div>
+  </nav>
+
+  <div class="page">
+
+    <div class="hero">
+      <div class="hero-label">overview@webemu</div>
+      <h1>Retro gaming,<br>in your browser.</h1>
+      <p class="hero-desc">WebEmu runs classic console ROMs directly in the browser with no plugins and no installs. Drop a ROM file or paste a URL, and your collection can sync through PocketBase when you want it to.</p>
+      <div class="hero-meta">
+        <div class="hero-stat">
+          <span class="hero-stat-val">10</span>
+          <span class="hero-stat-key">Systems</span>
+        </div>
+        <div class="hero-stat">
+          <span class="hero-stat-val">Open source</span>
+          <span class="hero-stat-key">Made for flavortown.hackclub.com</span>
+        </div>
+        <div class="hero-stat">
+          <span class="hero-stat-val">100%</span>
+          <span class="hero-stat-key">Browser-based</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-wrap">
+      <div class="section-header">
+        <span class="section-title">How it's built</span>
+        <div class="section-line"></div>
+      </div>
+      <div class="tech-strip">
+        <div class="tech-item">
+          <div class="tech-name">Nostalgist.js</div>
+          <div class="tech-desc">Powers the classic systems: NES, SNES, Game Boy, Game Gear, Genesis, and Game & Watch. Wraps libretro cores compiled to WebAssembly and manages ROM loading, rendering, input, and audio routing.</div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-name">EmulatorJS</div>
+          <div class="tech-desc">Handles the heavier systems: PlayStation, PSP, Nintendo 64, and Nintendo DS. Each core is loaded dynamically from CDN at launch so the page stays lightweight until you actually need it.</div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-name">libretro cores</div>
+          <div class="tech-desc">Every system runs on a dedicated libretro core: fceumm, snes9x, mGBA, genesis_plus_gx, gw, pcsx_rearmed, PPSSPP, mupen64plus, and melonDS. All compiled to WASM via Emscripten.</div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-name">Web Audio API</div>
+          <div class="tech-desc">A GainNode is patched onto the AudioContext before launch, intercepting all connect() calls. This gives real-time volume control over emulator audio without touching the core itself.</div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-name">libretro-thumbnails</div>
+          <div class="tech-desc">Cover art is fetched via HEAD requests from the libretro-thumbnails CDN on jsDelivr, matched to the ROM filename. Region tags like (USA) and (EUR) are stripped automatically as a fallback.</div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-name">Vanilla JS + CSS</div>
+          <div class="tech-desc">No frameworks, just plain JS and CSS. I am still learning the bigger stuff so keeping each page self-contained made more sense for now. Everything from save states to the overlay is hand-written.</div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-name">localStorage + IndexedDB</div>
+          <div class="tech-desc">Theme preference is persisted via localStorage and applied before first paint to prevent a flash. ROMs in the collection are stored in IndexedDB locally on your device and never leave it.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-left">
+        <span class="footer-brand">WebEmu</span>
+        <span class="footer-desc">An open source browser emulator, made for flavortown.</span>
+      </div>
+      <div class="footer-links">
+        <a href="https://nostalgist.js.org/" target="_blank" rel="noopener">Nostalgist.js</a>
+        <a href="https://emulatorjs.org/" target="_blank" rel="noopener">EmulatorJS</a>
+        <a href="https://github.com/libretro" target="_blank" rel="noopener">libretro</a>
+        <a href="https://flavortown.hackclub.com" target="_blank" rel="noopener">Flavortown / Hack Club</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="./Scripts/scrollbar.js"></script>
+  <script src="./Scripts/theme.js"></script>
+</body>
+</html>

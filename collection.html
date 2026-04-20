@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your WebEmu Collection</title>
+  <script src="./Scripts/global.js"></script>
+  <link rel="stylesheet" href="color.css">
+  <link rel="stylesheet" href="collection.css">
+  <style>
+
+  </style>
+</head>
+<body>
+
+  <nav id="mainNav">
+    <div class="nav-brand">WebEmu</div>
+    <a href="index.html">Home</a>
+    <a href="raw.html">Consoles</a>
+    <a href="collection.html" class="active">Collection</a>
+    <a href="faq.html">FAQ</a>
+    <div class="nav-right">
+      <button class="dark-toggle" id="themeToggle">T</button>
+    </div>
+  </nav>
+
+  <div class="signin-wrap" id="signinScreen">
+    <div class="signin-card">
+      <div class="signin-title" id="signinHeading">Sign in</div>
+      <p class="signin-desc">Your ROMs stay in IndexedDB on this device. Your account, avatars, and collection metadata sync through your PocketBase server.</p>
+      <div class="signin-fields">
+        <input class="signin-input" id="emailInput" type="email" placeholder="Email" />
+        <input class="signin-input" id="passwordInput" type="password" placeholder="Password" />
+      </div>
+      <div class="signin-error" id="signinError"></div>
+      <button class="btn-email" id="emailAuthBtn">Sign in</button>
+      <button class="signin-toggle" id="signinToggle">Don't have an account? Register</button>
+    </div>
+  </div>
+
+  <div class="collection-screen" id="collectionScreen">
+    <div class="page">
+
+      <div class="collection-header">
+        <div class="collection-header-left">
+          <div class="collection-label">collection@webemu</div>
+          <div class="collection-title" id="collectionTitle">My Collection</div>
+        </div>
+        <div class="collection-header-right">
+          <div class="user-pill" id="userPill">
+            <img class="user-avatar" id="userAvatar" src="" alt="" title="Click to change photo" />
+            <input type="file" class="avatar-upload-input" id="avatarUploadInput" accept="image/*" />
+            <span id="userName"></span>
+          </div>
+          <button class="btn primary" id="addGameBtn">+ Add Game</button>
+          <button class="btn" id="signOutBtn">Sign out</button>
+        </div>
+      </div>
+
+        <div class="device-banner" id="deviceBanner">
+          <strong>New device detected</strong>
+          Your collection is synced from PocketBase, but ROMs still live locally on each device. Re-add the ROM files here to play.
+        </div>
+
+      <div class="collection-toolbar">
+        <input class="search-input" id="searchInput" type="text" placeholder="Search your collection..." />
+        <div class="import-folder-btn">
+          Import Folder
+          <input type="file" id="folderInput" webkitdirectory multiple />
+        </div>
+      </div>
+
+      <div class="import-progress" id="importProgress"></div>
+
+      <div id="collectionContent">
+        <div class="loading-state">Loading your collection...</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Add Game</div>
+        <button class="modal-close" id="modalClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <div>
+          <label class="field-label">Game Name</label>
+          <input class="modal-input" id="modalGameName" type="text" placeholder="e.g. Sonic the Hedgehog" />
+        </div>
+        <div>
+          <label class="field-label">System</label>
+          <select class="modal-select" id="modalSystem">
+            <option value="">Select a system</option>
+            <option value="nes">NES / Famicom</option>
+            <option value="snes">Super NES / Super Famicom</option>
+            <option value="gameboy">Game Boy / GBC / GBA</option>
+            <option value="gamewatch">Game &amp; Watch</option>
+            <option value="genesis">Genesis / Mega Drive</option>
+            <option value="gamegear">Game Gear</option>
+            <option value="playstation">PlayStation</option>
+            <option value="psp">PSP</option>
+            <option value="n64">Nintendo 64</option>
+            <option value="nds">Nintendo DS</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">ROM File</label>
+          <div class="modal-file-drop" id="modalFileDrop">
+            <input type="file" id="modalRomFile" />
+            <div id="modalFileLabel">Drop ROM here or click to browse</div>
+            <div class="modal-file-name" id="modalFileName"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-status" id="modalStatus"></div>
+      <div class="modal-footer">
+        <button class="btn" id="modalCancelBtn">Cancel</button>
+        <button class="btn primary" id="modalSaveBtn">Save to Collection</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="folder-modal-overlay" id="folderModalOverlay">
+    <div class="folder-modal">
+      <div class="folder-modal-header">
+        <div class="folder-modal-title">Import Folder</div>
+        <button class="modal-close" id="folderModalClose">✕</button>
+      </div>
+      <div class="folder-modal-body" id="folderModalBody"></div>
+      <div class="folder-modal-footer">
+        <span class="folder-modal-count" id="folderModalCount"></span>
+        <div style="display:flex;gap:8px;">
+          <button class="btn" id="folderModalCancel">Cancel</button>
+          <button class="btn primary" id="folderModalImport">Import All</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cover-modal-overlay" id="coverModalOverlay">
+    <div class="cover-modal">
+      <div class="cover-modal-header">
+        <div class="cover-modal-title" id="coverModalTitle">Edit Cover Art</div>
+        <button class="modal-close" id="coverModalClose">✕</button>
+      </div>
+      <div class="cover-modal-body">
+
+        <div>
+          <label class="field-label" style="margin-bottom:8px;">Search for cover art</label>
+          <div class="cover-rescan-row">
+            <input class="modal-input" id="coverSearchInput" type="text" placeholder="Try a different game name..." />
+            <button class="cover-rescan-btn" id="coverRescanBtn">Scan</button>
+          </div>
+          <div style="font-size:11px;color:var(--muted2);margin-top:6px;">Edit the name above to search with a different title, then click Scan.</div>
+        </div>
+
+        <div>
+          <label class="field-label" style="margin-bottom:8px;">Upload your own image</label>
+          <div class="cover-upload-btn">
+            Click to upload a PNG or JPG from your device
+            <input type="file" id="coverUploadInput" accept="image/png,image/jpeg,image/webp" />
+          </div>
+        </div>
+
+        <div id="coverResultsWrap" style="display:none;">
+          <div class="cover-results-label" style="margin-bottom:10px;" id="coverResultsLabel">Results</div>
+          <div class="cover-results-grid" id="coverResultsGrid"></div>
+        </div>
+
+        <div class="cover-status" id="coverStatus"></div>
+
+      </div>
+      <div class="cover-modal-footer">
+        <button class="btn" id="coverModalCancel">Cancel</button>
+        <button class="btn primary" id="coverModalSave">Save Cover</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./Scripts/collection.js"></script>
+
+</body>
+</html>
