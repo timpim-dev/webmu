@@ -1,6 +1,7 @@
-const PB_URL = 'https://pocketbase.felixx';
-const PB_AUTH_COLLECTION = 'webmuser';
-const PB_GAMES_COLLECTION = 'games';
+const PB_CONFIG = window.__WEBEMU_POCKETBASE__ || {};
+const PB_URL = PB_CONFIG.url || 'https://pocketbase.felixx';
+const PB_AUTH_COLLECTION = PB_CONFIG.authCollection || 'webmuser';
+const PB_GAMES_COLLECTION = PB_CONFIG.gamesCollection || 'games';
 const PB_SESSION_KEY = 'webemu-pocketbase-session';
 
 const SYSTEM_LABELS = {
