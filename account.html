@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your WebEmu Account</title>
+  <script src="./Scripts/global.js"></script>
+  <script src="./Scripts/pocketbase.local.js"></script>
+  <link rel="stylesheet" href="color.css">
+  <link rel="stylesheet" href="account.css">
+</head>
+<body>
+
+  <nav id="mainNav">
+    <div class="nav-brand">WebEmu</div>
+    <a href="index.html">Home</a>
+    <a href="raw.html">Consoles</a>
+    <a href="collection.html">Collection</a>
+    <a href="account.html" class="active">Account</a>
+    <a href="faq.html">FAQ</a>
+    <div class="nav-right">
+      <button class="dark-toggle" id="themeToggle">T</button>
+    </div>
+  </nav>
+
+  <main class="account-page">
+    <section class="account-hero">
+      <div class="profile-card">
+        <div class="profile-avatar-wrap">
+          <img id="profileAvatar" class="profile-avatar" alt="Profile avatar" />
+          <input id="avatarInput" type="file" accept="image/*" hidden />
+        </div>
+        <div class="profile-main">
+          <div class="eyebrow">account@webemu</div>
+          <h1 id="displayName">Your account</h1>
+          <p id="accountBlurb">Track your library, playtime, and favorite systems in one place.</p>
+          <div class="profile-meta">
+            <span id="profileEmail"></span>
+            <span id="memberSince"></span>
+            <span id="lastSeen"></span>
+          </div>
+        </div>
+        <div class="profile-actions">
+          <label class="btn ghost" for="avatarInput">Change avatar</label>
+          <button class="btn primary" id="saveNameBtn">Save name</button>
+          <button class="btn" id="signOutBtn">Sign out</button>
+        </div>
+      </div>
+      <div class="profile-edit">
+        <label for="nameInput">Display name</label>
+        <input id="nameInput" type="text" class="text-input" placeholder="Your display name" />
+      </div>
+    </section>
+
+    <section class="stats-grid" id="statsGrid">
+      <article class="stat-card">
+        <span class="stat-label">Total games</span>
+        <span class="stat-value" id="totalGames">0</span>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">Total play time</span>
+        <span class="stat-value" id="totalPlayTime">0h 0m</span>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">Favorite console</span>
+        <span class="stat-value" id="favoriteConsole">-</span>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">Most played game</span>
+        <span class="stat-value" id="mostPlayedGame">-</span>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">Unique systems</span>
+        <span class="stat-value" id="uniqueSystems">0</span>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">Play sessions</span>
+        <span class="stat-value" id="playSessions">0</span>
+      </article>
+    </section>
+
+    <section class="content-grid">
+      <article class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-kicker">system breakdown</div>
+            <h2>Where your time went</h2>
+          </div>
+          <span class="panel-note" id="systemSummary">No playtime yet</span>
+        </div>
+        <div class="console-bars" id="consoleBars"></div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-kicker">game stats</div>
+            <h2>Time spent on a game</h2>
+          </div>
+          <span class="panel-note" id="selectedGameMeta">Select a game</span>
+        </div>
+        <div class="game-picker">
+          <label for="gameSelect">Game</label>
+          <select id="gameSelect" class="text-input"></select>
+        </div>
+        <div class="game-detail-grid">
+          <div class="mini-stat">
+            <span class="mini-label">Time played</span>
+            <span class="mini-value" id="gamePlayTime">0m</span>
+          </div>
+          <div class="mini-stat">
+            <span class="mini-label">Sessions</span>
+            <span class="mini-value" id="gamePlayCount">0</span>
+          </div>
+          <div class="mini-stat">
+            <span class="mini-label">System</span>
+            <span class="mini-value" id="gameSystem">-</span>
+          </div>
+          <div class="mini-stat">
+            <span class="mini-label">Last played</span>
+            <span class="mini-value" id="gameLastPlayed">-</span>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="content-grid bottom-grid">
+      <article class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-kicker">library</div>
+            <h2>Your collection</h2>
+          </div>
+          <span class="panel-note" id="libraryNote">0 games</span>
+        </div>
+        <div class="library-list" id="libraryList"></div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-kicker">activity</div>
+            <h2>Recent games</h2>
+          </div>
+          <span class="panel-note" id="recentNote">Nothing recent</span>
+        </div>
+        <div class="activity-list" id="activityList"></div>
+      </article>
+    </section>
+  </main>
+
+  <script type="module" src="./Scripts/account.js"></script>
+</body>
+</html>

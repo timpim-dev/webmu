@@ -15,7 +15,7 @@ Browser-based retro emulator. Drop a ROM and play. No installs, no plugins.
 ## Features
 
 - 10 systems across two emulation backends
-- Personal game collection with PocketBase email sign-in
+- Personal game collection with PocketBase email sign-in and account stats
 - Folder import, you can scan an entire ROM folder at once
 - Automatic cover art via libretro-thumbnails with manual rescan and custom image upload
 - Save states and load states
@@ -43,7 +43,7 @@ Browser-based retro emulator. Drop a ROM and play. No installs, no plugins.
 
 ## How it works
 
-Nostalgist.js wraps libretro cores compiled to WebAssembly via Emscripten for the classic systems. EmulatorJS handles the heavier ones, PlayStation, PSP, N64, and DS. Cover art is fetched from the libretro-thumbnails CDN on jsDelivr. ROMs in the collection are stored in IndexedDB locally on your device and never leave it. Game metadata and profile data sync to PocketBase on your server.
+Nostalgist.js wraps libretro cores compiled to WebAssembly via Emscripten for the classic systems. EmulatorJS handles the heavier ones, PlayStation, PSP, N64, and DS. Cover art is fetched from the libretro-thumbnails CDN on jsDelivr. ROMs in the collection are stored in IndexedDB locally on your device and never leave it. Game metadata, profile data, and play stats sync to PocketBase on your server.
 
 ## Getting Started
 ```bash
@@ -58,7 +58,7 @@ No build step. Open `index.html` in any modern browser.
 - Set `PB_URL` in `Scripts/collection.js` to your PocketBase URL.
 - Create an auth collection named `webmuser`, or change `PB_AUTH_COLLECTION` to match your auth collection name.
 - Add auth fields for `name`, `photoBase64`, `lastDevice`, and `lastSeen`.
-- Create a `games` collection with fields for `owner` as a relation to the auth collection, plus `name`, `system`, and `coverUrl`.
+- Create a `games` collection with fields for `owner` as a relation to the auth collection, plus `name`, `system`, `coverUrl`, `source`, `playCount`, `totalPlaySeconds`, and `lastPlayedAt`.
 
 For PSP and N64, SharedArrayBuffer headers are required. Run locally with:
 ```bash

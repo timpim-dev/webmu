@@ -269,6 +269,13 @@ function avatarFor(record) {
   return record?.photoBase64 || record?.avatarBase64 || record?.avatar || '';
 }
 
+function storeLaunchMeta(meta) {
+  sessionStorage.setItem('webemu-launch-meta', JSON.stringify({
+    ...meta,
+    launchedAt: Date.now(),
+  }));
+}
+
 async function createAuthUser(email, password) {
   await pbRequest(`/api/collections/${PB_AUTH_COLLECTION}/records`, {
     method: 'POST',
@@ -631,6 +638,11 @@ async function buildCard(game) {
       const tx = idb.transaction(IDB_STORE, 'readwrite');
       tx.objectStore(IDB_STORE).put(romFile, 'pending-launch');
       tx.oncomplete = () => {
+        storeLaunchMeta({
+          gameId: game.id,
+          name: game.name,
+          system: game.system,
+        });
         sessionStorage.setItem('webemu-launch-name', game.name);
         window.location.href = page;
       };
@@ -846,6 +858,10 @@ modalSaveBtn.addEventListener('click', async () => {
       name,
       system,
       coverUrl: coverUrl || '',
+      source: 'manual',
+      playCount: 0,
+      totalPlaySeconds: 0,
+      lastPlayedAt: null,
     };
     gameRecord = await createGameRecord(payload);
     await saveRom(gameRecord.id, file);
@@ -949,6 +965,10 @@ folderModalImport.addEventListener('click', async () => {
         name: entry.name,
         system: entry.system,
         coverUrl: coverUrl || '',
+        source: 'imported',
+        playCount: 0,
+        totalPlaySeconds: 0,
+        lastPlayedAt: null,
       });
       await saveRom(gameRecord.id, entry.file);
       done++;
