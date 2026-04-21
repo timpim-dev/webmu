@@ -147,26 +147,24 @@ function switchProfile(delta) {
 }
 
 document.addEventListener('keydown', e => {
+  console.log('Key pressed:', e.key, 'Game active:', window.WebMuGameActive);
   if (!window.WebMuGameActive) return;
   
-  switch (e.key) {
-    case '1': e.preventDefault(); if (!isRunning) startSplits(); break;
-    case '2': e.preventDefault(); if (isRunning) split(); break;
-    case '3': e.preventDefault(); resetSplits(); break;
-    case '4': e.preventDefault(); skipSegment(); break;
-    case '5': e.preventDefault(); switchProfile(e.shiftKey ? -1 : 1); break;
-    case '6': e.preventDefault(); 
-      splitsPanel.style.display = splitsPanel.style.display === 'none' ? 'block' : 'none';
-      break;
-  }
+  if (e.key === '1') { e.preventDefault(); console.log('Starting splits'); startSplits(); }
+  if (e.key === '2') { e.preventDefault(); console.log('Splitting'); split(); }
+  if (e.key === '3') { e.preventDefault(); console.log('Resetting'); resetSplits(); }
+  if (e.key === '4') { e.preventDefault(); console.log('Skipping'); skipSegment(); }
+  if (e.key === '5') { e.preventDefault(); console.log('Switching'); switchProfile(e.shiftKey ? -1 : 1); }
+  if (e.key === '6') { e.preventDefault(); console.log('Toggling'); splitsPanel.style.display = splitsPanel.style.display === 'none' ? 'block' : 'none'; }
 });
 
 document.body.appendChild(splitsPanel);
 
 function initSplitsOverlay(gameName) {
+  console.log('initSplitsOverlay called with:', gameName);
   profiles = getOrCreateProfiles();
   currentProfileIndex = 0;
-  splitsPanel.style.display = 'block';
+  splitsPanel.style.display = 'none';
   if (gameName) {
     for (let i = 0; i < profiles.length; i++) {
       const profile = profiles[i];

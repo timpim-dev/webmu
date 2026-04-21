@@ -82,32 +82,8 @@ async function getGroupAESKey(groupId) {
   return await CryptoUtils.importAESKey(jwkStr);
 }
 
-async function decryptMessageData(msg) {
-  try {
-    if (!msg.encryptedData || !msg.iv) return { text: '[Unencrypted or missing data]', imageUrl: '' };
-
-    let aesKey;
-    if (msg.group) {
-      aesKey = await getGroupAESKey(msg.group);
-    } else {
-      const encryptedKeyBase64 = msg.sender === currentUser.id ? msg.senderKey : msg.encryptedKey;
-      if (!encryptedKeyBase64) return { text: '[Key missing]', imageUrl: '' };
-      
-      const encryptedKeyBuf = CryptoUtils.base64ToBuffer(encryptedKeyBase64);
-      const decryptedJWKBuf = await CryptoUtils.decryptRSA(userPrivateKey, encryptedKeyBuf);
-      const jwkStr = CryptoUtils.bufferToText(decryptedJWKBuf);
-      aesKey = await CryptoUtils.importAESKey(jwkStr);
-    }
-
-    const encryptedDataBuf = CryptoUtils.base64ToBuffer(msg.encryptedData);
-    const ivBuf = CryptoUtils.base64ToBuffer(msg.iv);
-    const decryptedBuf = await CryptoUtils.decryptAES(aesKey, encryptedDataBuf, ivBuf);
-    const payloadStr = CryptoUtils.bufferToText(decryptedBuf);
-    return JSON.parse(payloadStr);
-  } catch (e) {
-    console.error('Decryption error:', e);
-    return { text: '[Encryption error or key mismatch]', imageUrl: '' };
-  }
+function decryptMessageData(msg) {
+  return { text: msg.text || '', imageUrl: msg.imageUrl || '' };
 }
 
 let currentTab = 'dms';
@@ -386,46 +362,17 @@ async function sendMessage() {
       imageUrl = await fileToBase64(file);
       clearImagePreview();
     }
-    
-    // Create payload
-    const payload = JSON.stringify({ text, imageUrl });
-    const payloadBuf = CryptoUtils.textToBuffer(payload);
 
-    let body = {
+    const body = {
       sender: currentUser.id,
+      text: text,
+      imageUrl: imageUrl,
     };
 
     if (activeChatType === 'dm') {
       body.recipient = activeChatId;
-
-      // Generate message AES key
-      const aesKey = await CryptoUtils.generateAESKey();
-      const { encrypted, iv } = await CryptoUtils.encryptAES(aesKey, payloadBuf);
-      
-      const aesKeyJWK = await CryptoUtils.exportAESKey(aesKey);
-      const aesKeyJWKBuf = CryptoUtils.textToBuffer(aesKeyJWK);
-
-      // Encrypt AES key for recipient
-      const recipientPub = await getRemotePublicKey(activeChatId);
-      const encKeyRecipient = await CryptoUtils.encryptRSA(recipientPub, aesKeyJWKBuf);
-
-      // Encrypt AES key for sender (self)
-      const encKeySender = await CryptoUtils.encryptRSA(userPublicKey, aesKeyJWKBuf);
-
-      body.encryptedData = CryptoUtils.bufferToBase64(encrypted);
-      body.iv = CryptoUtils.bufferToBase64(iv);
-      body.encryptedKey = CryptoUtils.bufferToBase64(encKeyRecipient);
-      body.senderKey = CryptoUtils.bufferToBase64(encKeySender);
-
     } else {
       body.group = activeChatId;
-
-      // Use Group AES Key
-      const groupKey = await getGroupAESKey(activeChatId);
-      const { encrypted, iv } = await CryptoUtils.encryptAES(groupKey, payloadBuf);
-
-      body.encryptedData = CryptoUtils.bufferToBase64(encrypted);
-      body.iv = CryptoUtils.bufferToBase64(iv);
     }
     
     const url = editingMessageId 
@@ -577,13 +524,6 @@ async function init() {
   }
   authToken = session.token;
   currentUser = session.record;
-  
-  try {
-    await initEncryption();
-  } catch (err) {
-    console.error('Encryption initialization failed:', err);
-    alert('Failed to initialize secure chat. Some features may not work.');
-  }
 
   const urlParams = new URLSearchParams(window.location.search);
   const dmId = urlParams.get('dm');
