@@ -224,6 +224,9 @@
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     setLoading(false);
     setStatus('');
+    
+    window.WebMuGameActive = false;
+    WebMuOverlay.cleanupOverlay();
   }
   closeBtn.addEventListener('click', closeGame);
   document.addEventListener('keydown', e => {
@@ -246,11 +249,16 @@
       });
       applyVolume();
       setLoading(false);
-      gameTitleEl.textContent = name || 'mGBA';
+      const gameName = name || 'mGBA';
+      gameTitleEl.textContent = gameName;
       mainNav.classList.add('hidden');         
       gameTopbar.classList.add('active');
       controlsOverlay.classList.add('active');
       controlsOverlay.classList.add('hidden'); 
+      
+      window.WebMuGameActive = true;
+      WebMuOverlay.initOverlay(gameName);
+      WebMuSplits.initSplits(gameName);
     } catch (err) {
       console.error('[mGBA]', err);
       setStatus('Launch failed: ' + (err?.message || String(err)));

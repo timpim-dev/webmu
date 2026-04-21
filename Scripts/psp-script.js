@@ -137,8 +137,13 @@ function launchROM(romUrl, name) {
   launcherWrap.style.display = 'none';
   mainNav.classList.add('hidden');
   gameScreen.classList.add('active');
-  gameTitleEl.textContent = name || 'PSP';
+  const gameName = name || 'PSP';
+  gameTitleEl.textContent = gameName;
   gameTopbar.classList.add('active');
+  
+  window.WebMuGameActive = true;
+  WebMuOverlay.initOverlay(gameName);
+  WebMuSplits.initSplits(gameName);
 
   const script   = document.createElement('script');
   script.src     = 'https://cdn.emulatorjs.org/stable/data/loader.js';
@@ -165,6 +170,8 @@ launchBtn.addEventListener('click', () => {
 });
 
 function closeGame() {
+  window.WebMuGameActive = false;
+  WebMuOverlay.cleanupOverlay();
   window.location.reload();
 }
 

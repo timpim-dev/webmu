@@ -222,6 +222,9 @@ async function closeGame() {
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
   setLoading(false);
   setStatus('');
+  
+  window.WebMuGameActive = false;
+  WebMuOverlay.cleanupOverlay();
 }
 closeBtn.addEventListener('click', closeGame);
 document.addEventListener('keydown', e => {
@@ -251,11 +254,16 @@ async function launchROM(rom, name) {
     });
     applyVolume();
     setLoading(false);
-    gameTitleEl.textContent = name || 'Game Gear';
+    const gameName = name || 'Game Gear';
+    gameTitleEl.textContent = gameName;
     mainNav.classList.add('hidden');
     gameTopbar.classList.add('active');
     controlsOverlay.classList.add('active');
     controlsOverlay.classList.add('hidden');
+    
+    window.WebMuGameActive = true;
+    WebMuOverlay.initOverlay(gameName);
+    WebMuSplits.initSplits(gameName);
   } catch (err) {
     console.error('[gearsystem]', err);
     setStatus('Launch failed: ' + (err?.message || String(err)));

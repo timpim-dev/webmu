@@ -134,8 +134,13 @@ if (launchName) {
       launcherWrap.style.display = 'none';
       mainNav.classList.add('hidden');
       gameScreen.classList.add('active');
-      gameTitleEl.textContent = name || 'PlayStation';
+      const gameName = name || 'PlayStation';
+      gameTitleEl.textContent = gameName;
       gameTopbar.classList.add('active');
+      
+      window.WebMuGameActive = true;
+      WebMuOverlay.initOverlay(gameName);
+      WebMuSplits.initSplits(gameName);
 
       const script    = document.createElement('script');
       script.src      = 'https://cdn.emulatorjs.org/stable/data/loader.js';
@@ -162,6 +167,8 @@ if (launchName) {
     });
 
     function closeGame() {
+      window.WebMuGameActive = false;
+      WebMuOverlay.cleanupOverlay();
       window.location.reload();
     }
 
