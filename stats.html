@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User Stats - WebMu</title>
+  <script src="./Scripts/global.js"></script>
+  <script src="./Scripts/crypto.js"></script>
+  <script src="./Scripts/pocketbase.local.js"></script>
+  <link rel="stylesheet" href="index-css.css">
+  <link rel="stylesheet" href="color.css">
+  <link rel="stylesheet" href="account.css">
+  <link rel="stylesheet" href="stats.css">
+</head>
+<body>
+
+  <nav id="mainNav">
+    <div class="nav-brand">WebMu</div>
+    <a href="index.html">Home</a>
+    <a href="raw.html">Consoles</a>
+    <a href="collection.html">Collection</a>
+    <a href="stats.html" class="active">Stats</a>
+    <a href="chat.html">Chat</a>
+    <a href="account.html">Account</a>
+    <a href="faq.html">FAQ</a>
+    <div class="nav-right">
+      <button class="dark-toggle" id="themeToggle">T</button>
+    </div>
+  </nav>
+
+  <main class="stats-page">
+    <aside class="stats-sidebar">
+      <div class="search-wrap">
+        <input type="text" id="userSearch" class="text-input" placeholder="Search users..." />
+      </div>
+      <div id="userList" class="user-list">
+        <!-- Users will be listed here -->
+        <div class="library-meta">Loading users...</div>
+      </div>
+    </aside>
+
+    <section class="stats-content" id="statsContent" style="display: none;">
+      <header class="account-hero">
+        <div class="profile-card">
+          <div class="profile-avatar-wrap">
+            <img id="profileAvatar" class="profile-avatar" alt="Profile avatar" style="display: none;" />
+            <span id="avatarInitials"></span>
+          </div>
+          <div class="profile-main">
+            <div class="eyebrow" id="userHandle">user@webmu</div>
+            <h1 id="displayName">Username</h1>
+            <p id="accountBlurb">Public stats and collection.</p>
+            <div class="profile-meta">
+              <span id="memberSince"></span>
+              <span id="lastSeen"></span>
+            </div>
+          </div>
+          <div class="profile-actions">
+            <button class="btn primary" id="messageBtn">Send Message</button>
+          </div>
+        </div>
+      </header>
+
+      <section class="stats-grid">
+        <article class="stat-card">
+          <span class="stat-label">Total games</span>
+          <span class="stat-value" id="totalGames">0</span>
+        </article>
+        <article class="stat-card">
+          <span class="stat-label">Total play time</span>
+          <span class="stat-value" id="totalPlayTime">0h 0m</span>
+        </article>
+        <article class="stat-card">
+          <span class="stat-label">Favorite console</span>
+          <span class="stat-value" id="favoriteConsole">-</span>
+        </article>
+        <article class="stat-card">
+          <span class="stat-label">Most played game</span>
+          <span class="stat-value" id="mostPlayedGame">-</span>
+        </article>
+        <article class="stat-card">
+          <span class="stat-label">Unique systems</span>
+          <span class="stat-value" id="uniqueSystems">0</span>
+        </article>
+        <article class="stat-card">
+          <span class="stat-label">Play sessions</span>
+          <span class="stat-value" id="playSessions">0</span>
+        </article>
+      </section>
+
+      <section class="content-grid">
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-kicker">system breakdown</div>
+              <h2>Where their time went</h2>
+            </div>
+          </div>
+          <div class="console-bars" id="consoleBars"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-kicker">library</div>
+              <h2>Their collection</h2>
+            </div>
+            <span class="panel-note" id="libraryNote">0 games</span>
+          </div>
+          <div class="library-list" id="libraryList"></div>
+        </article>
+      </section>
+    </section>
+
+    <section id="statsPlaceholder" class="stats-placeholder">
+      <div class="placeholder-content">
+        <h2>Discover Users</h2>
+        <p>Search and select a user on the left to see their gaming statistics and collection.</p>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="./Scripts/stats.js"></script>
+</body>
+</html>

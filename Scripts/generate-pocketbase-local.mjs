@@ -30,7 +30,7 @@ const url = env.PB_URL || 'https://pocketbase.felixx.dev';
 const authCollection = env.PB_AUTH_COLLECTION || 'webmuser';
 const gamesCollection = env.PB_GAMES_COLLECTION || 'games';
 
-const contents = `window.__WEBEMU_POCKETBASE__ = {
+const contents = `window.__WEBMU_POCKETBASE__ = {
   url: ${JSON.stringify(url)},
   authCollection: ${JSON.stringify(authCollection)},
   gamesCollection: ${JSON.stringify(gamesCollection)},

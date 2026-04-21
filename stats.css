@@ -1,0 +1,130 @@
+.stats-page {
+  display: flex;
+  gap: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+  height: calc(100vh - 80px);
+}
+
+.stats-sidebar {
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.stats-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.stats-placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--muted2);
+}
+
+.search-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--card);
+}
+
+.user-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.user-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+  border: 1px solid transparent;
+}
+
+.user-item:hover {
+  background: var(--hover);
+}
+
+.user-item.active {
+  background: var(--hover);
+  border-color: var(--accent);
+}
+
+.user-avatar-small {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--bg);
+}
+
+.user-initials-small {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--accent);
+}
+
+.user-meta {
+  font-size: 11px;
+  color: var(--muted2);
+}
+
+/* Scrollbar styling for the sidebar and content */
+.stats-sidebar ::-webkit-scrollbar,
+.stats-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.stats-sidebar ::-webkit-scrollbar-thumb,
+.stats-content::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 10px;
+}
+
+@media (max-width: 900px) {
+  .stats-page {
+    flex-direction: column;
+    height: auto;
+  }
+  .stats-sidebar {
+    width: 100%;
+    height: 400px;
+  }
+}

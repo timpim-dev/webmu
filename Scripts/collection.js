@@ -1,8 +1,8 @@
-const PB_CONFIG = window.__WEBEMU_POCKETBASE__ || {};
+const PB_CONFIG = window.__WEBMU_POCKETBASE__ || {};
 const PB_URL = PB_CONFIG.url || 'https://pocketbase.felixx.dev';
 const PB_AUTH_COLLECTION = PB_CONFIG.authCollection || 'webmuser';
 const PB_GAMES_COLLECTION = PB_CONFIG.gamesCollection || 'games';
-const PB_SESSION_KEY = 'webemu-pocketbase-session';
+const PB_SESSION_KEY = 'webmu-pocketbase-session';
 
 const SYSTEM_LABELS = {
   nes: 'NES / Famicom', snes: 'Super NES', gameboy: 'Game Boy / GBC / GBA',
@@ -52,7 +52,7 @@ function isRomFile(filename) {
   return ROM_EXTENSIONS.has(ext);
 }
 
-const IDB_NAME = 'webemu-roms';
+const IDB_NAME = 'webmu-roms';
 const IDB_VERSION = 1;
 const IDB_STORE = 'roms';
 
@@ -95,10 +95,10 @@ async function deleteRom(id) {
 }
 
 function getDeviceId() {
-  let id = localStorage.getItem('webemu-device-id');
+  let id = localStorage.getItem('webmu-device-id');
   if (!id) {
     id = 'device-' + Math.random().toString(36).slice(2);
-    localStorage.setItem('webemu-device-id', id);
+    localStorage.setItem('webmu-device-id', id);
   }
   return id;
 }
@@ -270,7 +270,7 @@ function avatarFor(record) {
 }
 
 function storeLaunchMeta(meta) {
-  sessionStorage.setItem('webemu-launch-meta', JSON.stringify({
+  sessionStorage.setItem('webmu-launch-meta', JSON.stringify({
     ...meta,
     launchedAt: Date.now(),
   }));
@@ -643,7 +643,7 @@ async function buildCard(game) {
           name: game.name,
           system: game.system,
         });
-        sessionStorage.setItem('webemu-launch-name', game.name);
+        sessionStorage.setItem('webmu-launch-name', game.name);
         window.location.href = page;
       };
     });

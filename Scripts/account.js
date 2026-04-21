@@ -1,8 +1,8 @@
-const PB_CONFIG = window.__WEBEMU_POCKETBASE__ || {};
+const PB_CONFIG = window.__WEBMU_POCKETBASE__ || {};
 const PB_URL = PB_CONFIG.url || 'https://pocketbase.felixx.dev';
 const PB_AUTH_COLLECTION = PB_CONFIG.authCollection || 'webmuser';
 const PB_GAMES_COLLECTION = PB_CONFIG.gamesCollection || 'games';
-const SESSION_KEY = 'webemu-pocketbase-session';
+const SESSION_KEY = 'webmu-pocketbase-session';
 const SYSTEM_LABELS = {
   nes: 'NES / Famicom',
   snes: 'Super NES / Super Famicom',
@@ -25,6 +25,7 @@ const profileEmail = document.getElementById('profileEmail');
 const memberSince = document.getElementById('memberSince');
 const lastSeen = document.getElementById('lastSeen');
 const nameInput = document.getElementById('nameInput');
+const isPublicToggle = document.getElementById('isPublicToggle');
 const saveNameBtn = document.getElementById('saveNameBtn');
 const signOutBtn = document.getElementById('signOutBtn');
 const totalGames = document.getElementById('totalGames');
@@ -309,6 +310,7 @@ function updateHeader(user) {
   memberSince.textContent = `Member since ${fmtDate(user.created)}`;
   lastSeen.textContent = user.lastSeen ? `Last seen ${fmtDate(user.lastSeen)}` : 'No recent device check';
   nameInput.value = user.name || display;
+  if (isPublicToggle) isPublicToggle.checked = user.isPublic !== false; // default true
 
   const photo = user.photoBase64 || user.photoURL || '';
   if (photo) {
@@ -406,6 +408,21 @@ saveNameBtn.addEventListener('click', () => {
   persistName().catch(err => {
     console.error('[account name]', err);
   });
+});
+
+isPublicToggle.addEventListener('change', async () => {
+  if (!currentUser || !authToken) return;
+  try {
+    currentUser = await pbRequest(`/api/collections/${PB_AUTH_COLLECTION}/records/${currentUser.id}`, {
+      method: 'PATCH',
+      token: authToken,
+      body: { isPublic: isPublicToggle.checked },
+    });
+    storeSession(authToken, currentUser);
+  } catch (err) {
+    console.error('[account privacy]', err);
+    isPublicToggle.checked = !isPublicToggle.checked; // revert on fail
+  }
 });
 
 avatarInput.addEventListener('change', () => {

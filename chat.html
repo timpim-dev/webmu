@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat - WebMu</title>
+  <script src="./Scripts/global.js"></script>
+  <script src="./Scripts/crypto.js"></script>
+  <script src="./Scripts/pocketbase.local.js"></script>
+  <link rel="stylesheet" href="index-css.css">
+  <link rel="stylesheet" href="color.css">
+  <link rel="stylesheet" href="chat.css">
+</head>
+<body>
+
+  <nav id="mainNav">
+    <div class="nav-brand">WebMu</div>
+    <a href="index.html">Home</a>
+    <a href="raw.html">Consoles</a>
+    <a href="collection.html">Collection</a>
+    <a href="stats.html">Stats</a>
+    <a href="chat.html" class="active">Chat</a>
+    <a href="account.html">Account</a>
+    <a href="faq.html">FAQ</a>
+    <div class="nav-right">
+      <button class="dark-toggle" id="themeToggle">T</button>
+    </div>
+  </nav>
+
+  <main class="chat-page">
+    <aside class="chat-sidebar">
+      <div class="sidebar-header">
+        <h2>Chats</h2>
+        <button id="newGroupBtn" class="btn primary small">+ Group</button>
+      </div>
+      <div class="chat-tabs">
+        <button class="tab-btn active" data-tab="dms">DMs</button>
+        <button class="tab-btn" data-tab="groups">Groups</button>
+      </div>
+      <div id="chatList" class="chat-list">
+        <div class="library-meta">Loading chats...</div>
+      </div>
+    </aside>
+
+    <section class="chat-main">
+      <header id="chatHeader" class="chat-header">
+        <div id="chatTitle" class="chat-title">Select a chat to start messaging</div>
+      </header>
+      
+      <div id="messageList" class="message-list">
+        <div class="chat-placeholder">
+          <p>Your messages will appear here</p>
+        </div>
+      </div>
+
+      <footer class="chat-footer">
+        <div id="imagePreview" class="image-preview" style="display: none;">
+          <img id="previewImg" src="" alt="Preview" />
+          <button id="removeImgBtn">×</button>
+        </div>
+        <div class="input-area">
+          <label for="chatImgInput" class="img-upload-label">
+            <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M19,19H5V5H19M19,3H5C3.89,3 3,3.9 3,5V19C3,20.1 3.89,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M13.96,12.29L11.21,15.83L9.25,13.47L6.5,17H17.5L13.96,12.29Z"/></svg>
+          </label>
+          <input type="file" id="chatImgInput" accept="image/*" hidden />
+          <input type="text" id="chatInput" placeholder="Type a message..." disabled />
+          <button id="sendBtn" class="btn primary" disabled>Send</button>
+        </div>
+      </footer>
+    </section>
+  </main>
+
+  <!-- New Group Modal -->
+  <div id="groupModal" class="modal">
+    <div class="modal-content">
+      <h3>Create New Group</h3>
+      <input type="text" id="groupNameInput" class="text-input" placeholder="Group Name" />
+      <div class="member-selector">
+        <p>Select Members:</p>
+        <div id="memberList" class="member-list">
+          <!-- Members will be loaded here -->
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="cancelGroupBtn" class="btn">Cancel</button>
+        <button id="confirmGroupBtn" class="btn primary">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./Scripts/chat.js"></script>
+</body>
+</html>

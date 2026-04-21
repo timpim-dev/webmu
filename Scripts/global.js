@@ -1,5 +1,5 @@
 (function () {
-  const STORAGE_KEY = 'webemu-theme';
+  const STORAGE_KEY = 'webmu-theme';
 
 const COLORS = {
   light:  { bg: '#ffffff', color: '#000000' },

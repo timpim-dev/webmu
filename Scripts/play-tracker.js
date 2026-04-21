@@ -1,8 +1,8 @@
-const PB_CONFIG = window.__WEBEMU_POCKETBASE__ || {};
+const PB_CONFIG = window.__WEBMU_POCKETBASE__ || {};
 const PB_URL = PB_CONFIG.url || 'https://pocketbase.felixx.dev';
 const PB_GAMES_COLLECTION = PB_CONFIG.gamesCollection || 'games';
-const SESSION_KEY = 'webemu-pocketbase-session';
-const META_KEY = 'webemu-launch-meta';
+const SESSION_KEY = 'webmu-pocketbase-session';
+const META_KEY = 'webmu-launch-meta';
 
 function pbUrl(path) {
   return `${PB_URL}${path}`;
@@ -108,6 +108,6 @@ if (launchMeta) {
   });
 }
 
-window.WebEmuPlayTracker = {
+window.WebMuPlayTracker = {
   flushPlayStats,
 };

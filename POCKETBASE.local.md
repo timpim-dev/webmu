@@ -1,22 +1,13 @@
-# PocketBase Schema Requirements (Updated for Encryption & Permissions)
-
-To enable the User Stats and **End-to-End Encrypted Chat**, update your PocketBase schema as follows.
-
 ## 1. Update `webmuser` Collection
 - **isPublic** (Type: Bool, Default: `true`)
-- **publicKey** (Type: Text) - Stores the user's RSA-OAEP public key in JWK format.
+- **publicKey** (Type: Text)
+- **currentlyPlaying** (Type: Relation, Collection: `games`, Optional) - Stores the game currently being played.
 
 ## 2. Create `webmuGroups` Collection
 - **Fields:**
   - **name** (Type: Text, Required)
   - **members** (Type: Relation, Multiple, Collection: `webmuser`)
   - **creator** (Type: Relation, Collection: `webmuser`)
-
-- **API Rules:**
-  - List/View: `members.id ?= @request.auth.id`
-  - Create: `@request.auth.id != ""`
-  - Update: `@request.auth.id = creator.id`
-  - Delete: `@request.auth.id = creator.id`
 
 ## 3. Create `webmuGroupKeys` Collection (New)
 *Stores the group's secret AES key, encrypted specifically for each member.*
@@ -36,13 +27,15 @@ To enable the User Stats and **End-to-End Encrypted Chat**, update your PocketBa
   - **sender** (Type: Relation, Collection: `webmuser`, Required)
   - **recipient** (Type: Relation, Collection: `webmuser`, Optional - for DMs)
   - **group** (Type: Relation, Collection: `webmuGroups`, Optional - for Groups)
-  - **encryptedData** (Type: Text) - Stores the AES-GCM encrypted payload.
-  - **encryptedKey** (Type: Text) - The AES key encrypted for the recipient (DMs only).
-  - **senderKey** (Type: Text) - The AES key encrypted for the sender.
-  - **iv** (Type: Text) - Initialization vector for AES-GCM encryption.
+  - **game** (Type: Relation, Collection: `games`, Optional) - For game-specific chat.
+  - **encryptedData** (Type: Text)
+  - **encryptedKey** (Type: Text)
+  - **senderKey** (Type: Text)
+  - **iv** (Type: Text)
 
-- **API Rules:**
-  - List/View: `@request.auth.id = sender.id || @request.auth.id = recipient.id || group.members.id ?= @request.auth.id`
-  - Create: `@request.auth.id = sender.id`
-  - Update: `@request.auth.id = sender.id`
-  - Delete: `@request.auth.id = sender.id || (group.id != "" && @request.auth.id = group.creator.id)`
+## 5. Create `speedruns` Collection (New)
+- **Fields:**
+  - **user** (Type: Relation, Collection: `webmuser`, Required)
+  - **game** (Type: Relation, Collection: `games`, Required)
+  - **time** (Type: Number, Required) - Time in milliseconds.
+  - **splitData** (Type: Text) - JSON representation of splits.

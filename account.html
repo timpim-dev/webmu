@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Your WebEmu Account</title>
+  <title>Your WebMu Account</title>
   <script src="./Scripts/global.js"></script>
   <script src="./Scripts/pocketbase.local.js"></script>
   <link rel="stylesheet" href="index-css.css">
@@ -13,10 +13,12 @@
 <body>
 
   <nav id="mainNav">
-    <div class="nav-brand">WebEmu</div>
+    <div class="nav-brand">WebMu</div>
     <a href="index.html">Home</a>
     <a href="raw.html">Consoles</a>
     <a href="collection.html">Collection</a>
+    <a href="stats.html">Stats</a>
+    <a href="chat.html">Chat</a>
     <a href="account.html" class="active">Account</a>
     <a href="faq.html">FAQ</a>
     <div class="nav-right">
@@ -33,7 +35,7 @@
           <input id="avatarInput" type="file" accept="image/*" hidden />
         </div>
         <div class="profile-main">
-          <div class="eyebrow">account@webemu</div>
+          <div class="eyebrow">account@webmu</div>
           <h1 id="displayName">Your account</h1>
           <p id="accountBlurb">Track your library, playtime, and favorite systems in one place.</p>
           <div class="profile-meta">
@@ -45,6 +47,10 @@
         <div class="profile-actions">
           <label class="btn ghost" for="avatarInput">Change avatar</label>
           <button class="btn primary" id="saveNameBtn">Save name</button>
+          <div class="toggle-wrap">
+            <input type="checkbox" id="isPublicToggle" checked />
+            <label for="isPublicToggle">Public Profile</label>
+          </div>
           <button class="btn" id="signOutBtn">Sign out</button>
         </div>
       </div>

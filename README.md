@@ -1,4 +1,4 @@
-# WebEmu
+# WebMu
 
 ## PLAY TESTING ROM IS PROVIDED IN GBA AND NES CONSOLES AS WELL AS GENESIS AND SNES, PLEASE CLICK THE URL BOX AND A URL WILL SPAWN 
 
@@ -10,7 +10,7 @@
 
 Browser-based retro emulator. Drop a ROM and play. No installs, no plugins.
 
-**Live Demo:** [webemu.whising.space](https://webemu.whising.space)
+**Live Demo:** [Coming Soon](#)
 
 ## Features
 
@@ -47,8 +47,8 @@ Nostalgist.js wraps libretro cores compiled to WebAssembly via Emscripten for th
 
 ## Getting Started
 ```bash
-git clone https://github.com/Whisingdilli71/webemu.git
-cd webemu
+git clone [Your Repository URL]
+cd webmu
 open index.html
 ```
 
@@ -71,4 +71,8 @@ With a `serve.json` containing COOP and COEP headers. On Netlify, add a `netlify
 
 If you found this useful, a star helps a lot.
 
-⭐ [Star WebEmu on GitHub](https://github.com/Whisingdilli71/webemu)
+⭐ [Star WebMu on GitHub]([Your Repository URL])
+
+## Credits
+
+WebMu is a fork of the original WebEmu project by [Whisingdilli71](https://github.com/Whisingdilli71/webemu).

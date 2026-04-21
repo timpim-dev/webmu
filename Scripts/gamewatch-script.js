@@ -19,7 +19,7 @@ const coverWrap       = document.getElementById('coverWrap');
 const coverImg        = document.getElementById('coverImg');
 const coverTitle      = document.getElementById('coverTitle');
 const kbdGrid         = document.getElementById('kbdGrid');
-const launchName = sessionStorage.getItem('webemu-launch-name');
+const launchName = sessionStorage.getItem('webmu-launch-name');
 
 let instance  = null;
 let idleTimer = null;
@@ -37,10 +37,10 @@ function extOf(name) {
 }
 
 if (launchName) {
-  sessionStorage.removeItem('webemu-launch-name');
+  sessionStorage.removeItem('webmu-launch-name');
 
   const openLaunchIDB = () => new Promise((resolve, reject) => {
-    const req = indexedDB.open('webemu-roms', 1);
+    const req = indexedDB.open('webmu-roms', 1);
     req.onupgradeneeded = e => e.target.result.createObjectStore('roms');
     req.onsuccess = e => resolve(e.target.result);
     req.onerror   = e => reject(e.target.error);

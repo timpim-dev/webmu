@@ -94,6 +94,21 @@ html, body {
   flex-wrap: wrap;
   gap: 10px;
   justify-content: flex-end;
+  align-items: center;
+}
+
+.toggle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0 10px;
+}
+
+.toggle-wrap input {
+  cursor: pointer;
 }
 
 .profile-edit {
