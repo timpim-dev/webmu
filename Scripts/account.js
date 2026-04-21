@@ -17,6 +17,7 @@ const SYSTEM_LABELS = {
 };
 
 const profileAvatar = document.getElementById('profileAvatar');
+const avatarInitials = document.getElementById('avatarInitials');
 const avatarInput = document.getElementById('avatarInput');
 const displayName = document.getElementById('displayName');
 const accountBlurb = document.getElementById('accountBlurb');
@@ -308,7 +309,17 @@ function updateHeader(user) {
   memberSince.textContent = `Member since ${fmtDate(user.created)}`;
   lastSeen.textContent = user.lastSeen ? `Last seen ${fmtDate(user.lastSeen)}` : 'No recent device check';
   nameInput.value = user.name || display;
-  profileAvatar.src = user.photoBase64 || user.photoURL || '';
+
+  const photo = user.photoBase64 || user.photoURL || '';
+  if (photo) {
+    profileAvatar.src = photo;
+    profileAvatar.style.display = 'block';
+    avatarInitials.textContent = '';
+  } else {
+    profileAvatar.src = '';
+    profileAvatar.style.display = 'none';
+    avatarInitials.textContent = display.charAt(0).toUpperCase();
+  }
 }
 
 function computeStats(games) {
