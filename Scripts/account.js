@@ -1,5 +1,5 @@
 const PB_CONFIG = window.__WEBEMU_POCKETBASE__ || {};
-const PB_URL = PB_CONFIG.url || 'https://pocketbase.felixx';
+const PB_URL = PB_CONFIG.url || 'https://pocketbase.felixx.dev';
 const PB_AUTH_COLLECTION = PB_CONFIG.authCollection || 'webmuser';
 const PB_GAMES_COLLECTION = PB_CONFIG.gamesCollection || 'games';
 const SESSION_KEY = 'webemu-pocketbase-session';

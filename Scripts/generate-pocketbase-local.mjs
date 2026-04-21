@@ -26,7 +26,7 @@ if (!fs.existsSync(envPath)) {
 }
 
 const env = parseEnv(fs.readFileSync(envPath, 'utf8'));
-const url = env.PB_URL || 'https://pocketbase.felixx';
+const url = env.PB_URL || 'https://pocketbase.felixx.dev';
 const authCollection = env.PB_AUTH_COLLECTION || 'webmuser';
 const gamesCollection = env.PB_GAMES_COLLECTION || 'games';
 
