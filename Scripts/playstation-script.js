@@ -139,8 +139,8 @@ if (launchName) {
       gameTopbar.classList.add('active');
       
       window.WebMuGameActive = true;
+      window.WebMuGameOverlay = false;
       WebMuOverlay.initOverlay(gameName);
-      WebMuSplits.initSplits(gameName);
 
       const script    = document.createElement('script');
       script.src      = 'https://cdn.emulatorjs.org/stable/data/loader.js';

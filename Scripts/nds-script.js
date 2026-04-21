@@ -138,9 +138,9 @@ function launchROM(romUrl, name) {
   gameTitleEl.textContent = gameName;
   gameTopbar.classList.add('active');
   
-  window.WebMuGameActive = true;
-  WebMuOverlay.initOverlay(gameName);
-  WebMuSplits.initSplits(gameName);
+window.WebMuGameActive = true;
+    window.WebMuGameOverlay = false;
+    WebMuOverlay.initOverlay(gameName);
 
   const script   = document.createElement('script');
   script.src     = 'https://cdn.emulatorjs.org/stable/data/loader.js';

@@ -225,6 +225,7 @@ async function closeGame() {
   setStatus('');
   
   window.WebMuGameActive = false;
+  window.WebMuGameOverlay = false;
   WebMuOverlay.cleanupOverlay();
 }
 closeBtn.addEventListener('click', closeGame);
@@ -256,8 +257,8 @@ async function launchROM(rom, name) {
     controlsOverlay.classList.add('hidden');
     
     window.WebMuGameActive = true;
+    window.WebMuGameOverlay = false;
     WebMuOverlay.initOverlay(gameName);
-    WebMuSplits.initSplits(gameName);
   } catch (err) {
     console.error('[fceumm]', err);
     setStatus('Launch failed: ' + (err?.message || String(err)));

@@ -1,6 +1,3 @@
-const PLAYERS_KEY = 'webmu-players-settings';
-const CHAT_SETTINGS_KEY = 'webmu-chat-settings';
-
 const PB_CONFIG = window.__WEBMU_POCKETBASE__ || {};
 const PB_URL = PB_CONFIG.url || 'https://pocketbase.felixx.dev';
 const PB_AUTH_COLLECTION = PB_CONFIG.authCollection || 'webmuser';
@@ -11,33 +8,12 @@ const PB_GROUP_KEYS_COLLECTION = 'webmuGroupKeys';
 const SESSION_KEY = 'webmu-pocketbase-session';
 const PRIVATE_KEY_STORAGE = 'webmu-private-key';
 
-const DEFAULT_PLAYERS_SETTINGS = {
-  position: 'top-left',
-  opacity: 80,
-  fontSize: 'medium',
-  visible: false
-};
-
+const CHAT_SETTINGS_KEY = 'webmu-chat-settings';
 const DEFAULT_CHAT_SETTINGS = {
   position: 'bottom-right',
   opacity: 80,
-  fontSize: 'medium',
-  visible: false,
-  toggleKey: 'F6'
+  fontSize: 'medium'
 };
-
-function getPlayersSettings() {
-  const raw = localStorage.getItem(PLAYERS_KEY);
-  try {
-    return raw ? JSON.parse(raw) : DEFAULT_PLAYERS_SETTINGS;
-  } catch {
-    return DEFAULT_PLAYERS_SETTINGS;
-  }
-}
-
-function savePlayersSettings(settings) {
-  localStorage.setItem(PLAYERS_KEY, JSON.stringify(settings));
-}
 
 function getChatSettings() {
   const raw = localStorage.getItem(CHAT_SETTINGS_KEY);
@@ -79,11 +55,7 @@ async function pbRequest(path, { method = 'GET', token = null, body = null } = {
   const text = await res.text();
   let data = null;
   if (text) {
-    try {
-      data = JSON.parse(text);
-    } catch (_) {
-      data = { message: text };
-    }
+    try { data = JSON.parse(text); } catch (_) { data = { message: text }; }
   }
   if (!res.ok) throw new Error(data?.message || `Request failed (${res.status})`);
   return data;
@@ -98,76 +70,37 @@ async function fileToBase64(file) {
   });
 }
 
-const playersPanel = document.createElement('div');
-playersPanel.id = 'players-panel';
-playersPanel.className = 'game-overlay';
-playersPanel.style.display = 'none';
-playersPanel.innerHTML = `
-  <div class="overlay-header">
-    <span>Currently Playing</span>
+const gameOverlayPanel = document.createElement('div');
+gameOverlayPanel.id = 'game-overlay-panel';
+gameOverlayPanel.className = 'game-overlay-panel';
+gameOverlayPanel.innerHTML = `
+  <div class="overlay-tabs">
+    <button class="overlay-tab active" data-tab="players">Players</button>
+    <button class="overlay-tab" data-tab="chat">Chat</button>
+    <button class="overlay-tab" data-tab="splits">Splits</button>
     <button class="overlay-close">&times;</button>
   </div>
-  <div class="players-list"></div>
-`;
-
-const chatPanel = document.createElement('div');
-chatPanel.id = 'chat-panel';
-chatPanel.className = 'game-overlay';
-chatPanel.style.display = 'none';
-chatPanel.innerHTML = `
-  <div class="overlay-header">
-    <span>Game Chat</span>
-    <button class="overlay-settings">⚙</button>
-  </div>
-  <div class="chat-messages"></div>
-  <div class="chat-input-area">
-    <input type="text" class="chat-input" placeholder="Type a message..." />
-    <input type="file" class="chat-img-input" accept="image/*" hidden />
-    <button class="chat-img-btn">📷</button>
-    <button class="chat-send">Send</button>
-  </div>
-`;
-
-const settingsModal = document.createElement('div');
-settingsModal.id = 'overlay-settings-modal';
-settingsModal.className = 'modal';
-settingsModal.style.display = 'none';
-settingsModal.innerHTML = `
-  <div class="modal-content">
-    <h3>Chat Settings</h3>
-    <div class="setting-group">
-      <label>Position</label>
-      <select class="setting-position">
-        <option value="top-left">Top Left</option>
-        <option value="top-right">Top Right</option>
-        <option value="bottom-left">Bottom Left</option>
-        <option value="bottom-right">Bottom Right</option>
-      </select>
+  <div class="overlay-content">
+    <div class="tab-panel" id="players-panel">
+      <div class="players-list"></div>
     </div>
-    <div class="setting-group">
-      <label>Opacity</label>
-      <input type="range" class="setting-opacity" min="10" max="100" value="80" />
+    <div class="tab-panel" id="chat-panel" style="display:none;">
+      <div class="chat-messages"></div>
+      <div class="chat-input-area">
+        <input type="text" class="chat-input" placeholder="Type..." />
+        <button class="chat-send">Send</button>
+      </div>
     </div>
-    <div class="setting-group">
-      <label>Font Size</label>
-      <select class="setting-font">
-        <option value="small">Small</option>
-        <option value="medium">Medium</option>
-        <option value="large">Large</option>
-      </select>
-    </div>
-    <div class="setting-group">
-      <label>Toggle Key</label>
-      <select class="setting-key">
-        <option value="F6">F6</option>
-        <option value="F7">F7</option>
-        <option value="F8">F8</option>
-        <option value="F9">F9</option>
-        <option value="F10">F10</option>
-      </select>
-    </div>
-    <div class="modal-actions">
-      <button class="btn close-settings">Done</button>
+    <div class="tab-panel" id="splits-panel" style="display:none;">
+      <div class="splits-header">
+        <span class="splits-profile-name">Default</span>
+      </div>
+      <div class="splits-time">00:00.000</div>
+      <div class="splits-delta"></div>
+      <div class="splits-segments"></div>
+      <div class="splits-controls">
+        <span class="key-hint">F7: Start | F8: Split | F9: Reset | F10: Skip | F5: Profile</span>
+      </div>
     </div>
   </div>
 `;
@@ -183,42 +116,69 @@ let chatPollInterval = null;
 let playersPollInterval = null;
 let lastChatMessageId = null;
 
+const SPLITS_KEY = 'webmu-splits';
+let currentProfileIndex = 0;
+let profiles = [];
+let isSplitsRunning = false;
+let startTime = 0;
+let currentSegment = 0;
+let segmentTimes = [];
+let pausedTime = 0;
+
+function getProfiles() {
+  const raw = localStorage.getItem(SPLITS_KEY);
+  try { return raw ? JSON.parse(raw) : []; } catch { return []; }
+}
+
+function getOrCreateProfiles() {
+  let profiles = getProfiles();
+  if (profiles.length === 0) {
+    profiles = [{ name: 'Default', gameFilter: '', segments: [{ name: 'Any%', personalBest: 0 }] }];
+    localStorage.setItem(SPLITS_KEY, JSON.stringify(profiles));
+  }
+  return profiles;
+}
+
+function formatTime(ms) {
+  if (!ms || ms <= 0) return '00:00.000';
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  const millis = ms % 1000;
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${millis.toString().padStart(3, '0')}`;
+}
+
+function formatDelta(ms) {
+  if (!ms || ms === 0) return '';
+  const sign = ms > 0 ? '+' : '-';
+  return sign + formatTime(Math.abs(ms));
+}
+
 async function initEncryption() {
   const localPriv = localStorage.getItem(PRIVATE_KEY_STORAGE);
   const remotePub = currentUser.publicKey;
-
   if (localPriv && remotePub) {
     try {
       userPrivateKey = await CryptoUtils.importPrivateKey(localPriv);
       userPublicKey = await CryptoUtils.importPublicKey(remotePub);
       return;
-    } catch (e) {
-      console.error('Failed to import keys, regenerating...', e);
-    }
+    } catch (e) { console.error('Key import failed', e); }
   }
-
   const pair = await CryptoUtils.generateRSAKeyPair();
   const pubJWK = await CryptoUtils.exportPublicKey(pair.publicKey);
   const privJWK = await CryptoUtils.exportPrivateKey(pair.privateKey);
-
   localStorage.setItem(PRIVATE_KEY_STORAGE, privJWK);
   userPrivateKey = pair.privateKey;
   userPublicKey = pair.publicKey;
-
   currentUser = await pbRequest(`/api/collections/${PB_AUTH_COLLECTION}/records/${currentUser.id}`, {
-    method: 'PATCH',
-    token: authToken,
-    body: { publicKey: pubJWK }
+    method: 'PATCH', token: authToken, body: { publicKey: pubJWK }
   });
 }
 
 async function getGroupAESKey(groupId) {
-  const qs = new URLSearchParams({
-    filter: `group="${groupId}" && user="${currentUser.id}"`
-  });
+  const qs = new URLSearchParams({ filter: `group="${groupId}" && user="${currentUser.id}"` });
   const res = await pbRequest(`/api/collections/${PB_GROUP_KEYS_COLLECTION}/records?${qs.toString()}`, { token: authToken });
   if (!res.items.length) throw new Error('No access to group key');
-
   const encryptedKeyBuf = CryptoUtils.base64ToBuffer(res.items[0].encryptedKey);
   const decryptedJWKBuf = await CryptoUtils.decryptRSA(userPrivateKey, encryptedKeyBuf);
   const jwkStr = CryptoUtils.bufferToText(decryptedJWKBuf);
@@ -228,7 +188,6 @@ async function getGroupAESKey(groupId) {
 async function decryptMessageData(msg) {
   try {
     if (!msg.encryptedData || !msg.iv) return { text: '[Unencrypted]', imageUrl: '' };
-
     const aesKey = await getGroupAESKey(msg.group);
     const encryptedDataBuf = CryptoUtils.base64ToBuffer(msg.encryptedData);
     const ivBuf = CryptoUtils.base64ToBuffer(msg.iv);
@@ -236,44 +195,31 @@ async function decryptMessageData(msg) {
     const payloadStr = CryptoUtils.bufferToText(decryptedBuf);
     return JSON.parse(payloadStr);
   } catch (e) {
-    console.error('Decryption error:', e);
+    console.error('Decrypt error:', e);
     return { text: '[Decryption error]', imageUrl: '' };
   }
 }
 
 async function loadCurrentPlayers() {
   if (!session || !currentGameName) return;
-
   try {
     const gameName = currentGameName.toLowerCase().replace(/\s*\(.*?\)/g, '').trim();
-
-    const qs = new URLSearchParams({
-      filter: `currentlyPlaying != null`,
-      expand: 'currentlyPlaying',
-      perPage: '100'
-    });
-
+    const qs = new URLSearchParams({ filter: `currentlyPlaying != null`, expand: 'currentlyPlaying', perPage: '100' });
     const res = await pbRequest(`/api/collections/${PB_GAMES_COLLECTION}/records?${qs.toString()}`, { token: authToken });
-
-    const playersList = playersPanel.querySelector('.players-list');
-    playersList.innerHTML = '';
-
+    const list = gameOverlayPanel.querySelector('.players-list');
+    list.innerHTML = '';
     const players = [];
     for (const game of res.items || []) {
       const expand = game.expand || {};
       const playing = expand.currentlyPlaying || [];
       for (const user of playing) {
-        if (!players.find(p => p.id === user.id)) {
-          players.push(user);
-        }
+        if (!players.find(p => p.id === user.id)) players.push(user);
       }
     }
-
     if (players.length === 0) {
-      playersList.innerHTML = '<div class="no-players">No one currently playing</div>';
+      list.innerHTML = '<div class="no-players">No one currently playing</div>';
       return;
     }
-
     players.forEach(user => {
       const el = document.createElement('div');
       el.className = 'player-item';
@@ -281,11 +227,9 @@ async function loadCurrentPlayers() {
         <div class="player-avatar">${(user.name || user.email || '?')[0].toUpperCase()}</div>
         <div class="player-name">${user.name || user.email}</div>
       `;
-      playersList.appendChild(el);
+      list.appendChild(el);
     });
-  } catch (err) {
-    console.error('[loadCurrentPlayers]', err);
-  }
+  } catch (err) { console.error('[loadCurrentPlayers]', err); }
 }
 
 function fmtTime(dateStr) {
@@ -295,311 +239,228 @@ function fmtTime(dateStr) {
 
 async function loadGameChat() {
   if (!gameChatId) return;
-
-  const qs = new URLSearchParams({
-    filter: `group="${gameChatId}"`,
-    sort: 'created',
-    expand: 'sender'
-  });
-
+  const qs = new URLSearchParams({ filter: `group="${gameChatId}"`, sort: 'created', expand: 'sender' });
   try {
     const res = await pbRequest(`/api/collections/${PB_MESSAGES_COLLECTION}/records?${qs.toString()}`, { token: authToken });
     const messages = res.items || [];
-
     if (messages.length > 0 && messages[messages.length - 1].id === lastChatMessageId) return;
-
-    const container = chatPanel.querySelector('.chat-messages');
+    const container = gameOverlayPanel.querySelector('#chat-panel .chat-messages');
     container.innerHTML = '';
-
     for (const msg of messages) {
       const isSent = msg.sender === currentUser.id;
       const decrypted = await decryptMessageData(msg);
-
       const el = document.createElement('div');
       el.className = `chat-message ${isSent ? 'sent' : 'received'}`;
-
       let content = '';
       if (decrypted.imageUrl) content += `<img src="${decrypted.imageUrl}" class="msg-img" />`;
       if (decrypted.text) content += `<div class="msg-bubble">${decrypted.text}</div>`;
-
-      const senderName = msg.expand?.sender?.name || msg.expand?.sender?.email?.split('@')[0] || '?';
-
-      el.innerHTML = `
-        ${content}
-        <div class="msg-meta">${fmtTime(msg.created)}</div>
-      `;
+      el.innerHTML = `${content}<div class="msg-meta">${fmtTime(msg.created)}</div>`;
       container.appendChild(el);
     }
-
     if (messages.length > 0) {
       lastChatMessageId = messages[messages.length - 1].id;
       container.scrollTop = container.scrollHeight;
     } else {
       container.innerHTML = '<div class="no-messages">No messages yet for this game</div>';
     }
-  } catch (err) {
-    console.error('[loadGameChat]', err);
-  }
+  } catch (err) { console.error('[loadGameChat]', err); }
 }
 
 async function findOrCreateGameChat(gameName) {
   const groupName = `${gameName}_chat`;
-
-  const qs = new URLSearchParams({
-    filter: `name="${groupName}"`,
-    perPage: '1'
-  });
-
+  const qs = new URLSearchParams({ filter: `name="${groupName}"`, perPage: '1' });
   try {
     let res = await pbRequest(`/api/collections/${PB_GROUPS_COLLECTION}/records?${qs.toString()}`, { token: authToken });
-
-    if (res.items && res.items.length > 0) {
-      return res.items[0].id;
-    }
-
+    if (res.items && res.items.length > 0) return res.items[0].id;
     const group = await pbRequest(`/api/collections/${PB_GROUPS_COLLECTION}/records`, {
-      method: 'POST',
-      token: authToken,
-      body: {
-        name: groupName,
-        members: [currentUser.id],
-        creator: currentUser.id
-      }
+      method: 'POST', token: authToken,
+      body: { name: groupName, members: [currentUser.id], creator: currentUser.id }
     });
-
     return group.id;
-  } catch (err) {
-    console.error('[findOrCreateGameChat]', err);
-    return null;
+  } catch (err) { console.error('[findOrCreateGameChat]', err); return null; }
+}
+
+function renderSplits() {
+  const profile = profiles[currentProfileIndex];
+  if (!profile) return;
+  const sp = gameOverlayPanel.querySelector('#splits-panel');
+  sp.querySelector('.splits-profile-name').textContent = profile.name;
+  const totalTime = isSplitsRunning ? Date.now() - startTime + pausedTime : pausedTime;
+  sp.querySelector('.splits-time').textContent = formatTime(totalTime);
+  if (profile.segments.length > 0) {
+    const pbTotal = profile.segments.reduce((sum, s) => sum + (s.personalBest || 0), 0);
+    const delta = totalTime - pbTotal;
+    const deltaEl = sp.querySelector('.splits-delta');
+    deltaEl.textContent = formatDelta(delta);
+    deltaEl.className = 'splits-delta ' + (delta > 0 ? 'behind' : delta < 0 ? 'ahead' : '');
   }
+  const segContainer = sp.querySelector('.splits-segments');
+  segContainer.innerHTML = '';
+  profile.segments.forEach((seg, idx) => {
+    const el = document.createElement('div');
+    el.className = 'split-segment';
+    if (idx === currentSegment) el.classList.add('current');
+    if (segmentTimes[idx] !== undefined) el.classList.add('completed');
+    const time = segmentTimes[idx] || 0;
+    el.innerHTML = `<span class="seg-name">${seg.name}</span><span class="seg-time">${formatTime(time)}</span>`;
+    segContainer.appendChild(el);
+  });
 }
 
-function togglePlayersPanel() {
-  const settings = getPlayersSettings();
-  settings.visible = !settings.visible;
-  savePlayersSettings(settings);
-  playersPanel.style.display = settings.visible ? 'flex' : 'none';
+function startSplits() {
+  if (isSplitsRunning) return;
+  isSplitsRunning = true;
+  startTime = Date.now();
+  pausedTime = 0;
+  currentSegment = 0;
+  segmentTimes = [];
+  renderSplits();
+}
 
-  if (settings.visible && !playersPollInterval) {
-    loadCurrentPlayers();
-    playersPollInterval = setInterval(loadCurrentPlayers, 5000);
-  } else if (!settings.visible && playersPollInterval) {
-    clearInterval(playersPollInterval);
-    playersPollInterval = null;
+function split() {
+  if (!isSplitsRunning) return;
+  const profile = profiles[currentProfileIndex];
+  if (!profile) return;
+  const now = Date.now() - startTime + pausedTime;
+  segmentTimes[currentSegment] = now;
+  if (profile.segments[currentSegment]) {
+    profile.segments[currentSegment].personalBest = Math.min(profile.segments[currentSegment].personalBest || now, now);
+    localStorage.setItem(SPLITS_KEY, JSON.stringify(profiles));
   }
+  if (currentSegment < profile.segments.length - 1) currentSegment++;
+  else isSplitsRunning = false;
+  renderSplits();
 }
 
-function toggleChatPanel() {
-  const settings = getChatSettings();
-  settings.visible = !settings.visible;
-  saveChatSettings(settings);
-  chatPanel.style.display = settings.visible ? 'flex' : 'none';
-
-  if (!settings.visible && chatPollInterval) {
-    clearInterval(chatPollInterval);
-    chatPollInterval = null;
-  }
+function resetSplits() {
+  isSplitsRunning = false;
+  currentSegment = 0;
+  segmentTimes = [];
+  pausedTime = 0;
+  renderSplits();
 }
 
-function updatePlayersPanelPosition(position) {
-  const settings = getPlayersSettings();
-  settings.position = position;
-  savePlayersSettings(settings);
-  playersPanel.className = 'game-overlay players-' + position;
+function skipSegment() {
+  if (!isSplitsRunning) return;
+  const profile = profiles[currentProfileIndex];
+  if (!profile) return;
+  segmentTimes[currentSegment] = -1;
+  if (currentSegment < profile.segments.length - 1) currentSegment++;
+  else isSplitsRunning = false;
+  renderSplits();
 }
 
-function updateChatPanelPosition(position) {
-  const settings = getChatSettings();
-  settings.position = position;
-  saveChatSettings(settings);
-  chatPanel.className = 'game-overlay chat-' + position;
+function switchProfile(delta) {
+  if (profiles.length <= 1) return;
+  currentProfileIndex = (currentProfileIndex + delta + profiles.length) % profiles.length;
+  resetSplits();
+  renderSplits();
 }
 
-function updateChatPanelOpacity(opacity) {
-  const settings = getChatSettings();
-  settings.opacity = opacity;
-  saveChatSettings(settings);
-  chatPanel.style.opacity = (opacity / 100).toString();
-}
-
-function updateChatPanelFontSize(size) {
-  const settings = getChatSettings();
-  settings.fontSize = size;
-  saveChatSettings(settings);
-
-  const fontMap = { small: '12px', medium: '14px', large: '16px' };
-  chatPanel.style.fontSize = fontMap[size] || '14px';
-}
-
-playersPanel.querySelector('.overlay-close').addEventListener('click', togglePlayersPanel);
-chatPanel.querySelector('.overlay-settings').addEventListener('click', () => {
-  settingsModal.style.display = 'flex';
-
-  const settings = getChatSettings();
-  settingsModal.querySelector('.setting-position').value = settings.position;
-  settingsModal.querySelector('.setting-opacity').value = settings.opacity;
-  settingsModal.querySelector('.setting-font').value = settings.fontSize;
-  settingsModal.querySelector('.setting-key').value = settings.toggleKey;
+const tabs = gameOverlayPanel.querySelectorAll('.overlay-tab');
+tabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    tabs.forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    gameOverlayPanel.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+    const panel = gameOverlayPanel.querySelector(`#${tab.dataset.tab}-panel`);
+    if (panel) panel.style.display = 'flex';
+    
+    if (tab.dataset.tab === 'players') {
+      loadCurrentPlayers();
+      if (!playersPollInterval) {
+        playersPollInterval = setInterval(loadCurrentPlayers, 5000);
+      }
+    } else if (tab.dataset.tab === 'chat' && !chatPollInterval) {
+      loadGameChat();
+      chatPollInterval = setInterval(loadGameChat, 3000);
+    } else if (tab.dataset.tab === 'splits') {
+      renderSplits();
+    }
+  });
 });
 
-settingsModal.querySelector('.close-settings').addEventListener('click', () => {
-  settingsModal.style.display = 'none';
-
-  updateChatPanelPosition(settingsModal.querySelector('.setting-position').value);
-  updateChatPanelOpacity(parseInt(settingsModal.querySelector('.setting-opacity').value));
-  updateChatPanelFontSize(settingsModal.querySelector('.setting-font').value);
+gameOverlayPanel.querySelector('.overlay-close').addEventListener('click', () => {
+  gameOverlayPanel.style.display = 'none';
+  window.WebMuGameOverlay = false;
 });
 
-document.body.appendChild(playersPanel);
-document.body.appendChild(chatPanel);
-document.body.appendChild(settingsModal);
-
-let chatInput = chatPanel.querySelector('.chat-input');
-let chatSendBtn = chatPanel.querySelector('.chat-send');
-let chatImgInput = chatPanel.querySelector('.chat-img-input');
-let chatImgBtn = chatPanel.querySelector('.chat-img-btn');
-
+const chatInput = gameOverlayPanel.querySelector('.chat-input');
+const chatSendBtn = gameOverlayPanel.querySelector('.chat-send');
 chatSendBtn.addEventListener('click', async () => {
   const text = chatInput.value.trim();
-  const file = chatImgInput.files[0];
-
-  if (!text && !file) return;
-  if (!gameChatId) return;
-
+  if (!text || !gameChatId) return;
   chatInput.value = '';
-  chatInput.disabled = true;
-  chatSendBtn.disabled = true;
-
   try {
-    let imageUrl = '';
-    if (file) {
-      imageUrl = await fileToBase64(file);
-    }
-
-    const payload = JSON.stringify({ text, imageUrl });
+    const payload = JSON.stringify({ text, imageUrl: '' });
     const payloadBuf = CryptoUtils.textToBuffer(payload);
-
     const groupKey = await getGroupAESKey(gameChatId);
     const { encrypted, iv } = await CryptoUtils.encryptAES(groupKey, payloadBuf);
-
-    const body = {
-      group: gameChatId,
-      sender: currentUser.id,
-      encryptedData: CryptoUtils.bufferToBase64(encrypted),
-      iv: CryptoUtils.bufferToBase64(iv)
-    };
-
-    await pbRequest(`/api/collections/${PB_MESSAGES_COLLECTION}/records`, {
-      method: 'POST',
-      token: authToken,
-      body: body
-    });
-
+    const body = { group: gameChatId, sender: currentUser.id, encryptedData: CryptoUtils.bufferToBase64(encrypted), iv: CryptoUtils.bufferToBase64(iv) };
+    await pbRequest(`/api/collections/${PB_MESSAGES_COLLECTION}/records`, { method: 'POST', token: authToken, body });
     loadGameChat();
-  } catch (err) {
-    console.error('[sendMessage]', err);
-    alert(err.message);
-  } finally {
-    chatInput.disabled = false;
-    chatSendBtn.disabled = false;
-    chatInput.focus();
-  }
+  } catch (err) { console.error('[sendMessage]', err); }
 });
 
-chatInput.addEventListener('keypress', e => {
-  if (e.key === 'Enter') chatSendBtn.click();
-});
-
-chatImgBtn.addEventListener('click', () => chatImgInput.click());
-
-chatImgInput.addEventListener('change', () => {
-  if (chatImgInput.files[0]) {
-    chatInput.placeholder = 'Image selected';
-  }
-});
+chatInput.addEventListener('keypress', e => { if (e.key === 'Enter') chatSendBtn.click(); });
 
 document.addEventListener('keydown', e => {
   if (!window.WebMuGameActive) return;
   if (e.key === 'Tab') {
     e.preventDefault();
-    togglePlayersPanel();
-  }
-
-  const chatSettings = getChatSettings();
-  if (e.key === chatSettings.toggleKey) {
-    e.preventDefault();
-    if (chatSettings.visible) {
-      if (chatPollInterval) {
-        clearInterval(chatPollInterval);
-        chatPollInterval = null;
-      }
-      chatPanel.style.display = 'none';
-      chatSettings.visible = false;
-      saveChatSettings(chatSettings);
+    if (gameOverlayPanel.style.display === 'none' || !gameOverlayPanel.style.display) {
+      gameOverlayPanel.style.display = 'flex';
+      window.WebMuGameOverlay = true;
+      loadCurrentPlayers();
+      if (!playersPollInterval) playersPollInterval = setInterval(loadCurrentPlayers, 5000);
     } else {
-      if (!gameChatId) {
-        (async () => {
-          gameChatId = await findOrCreateGameChat(currentGameName);
-          if (gameChatId && chatSettings.visible) {
-            loadGameChat();
-            chatPollInterval = setInterval(loadGameChat, 3000);
-          }
-        })();
-      } else {
-        loadGameChat();
-        chatPollInterval = setInterval(loadGameChat, 3000);
-      }
-      chatPanel.style.display = 'flex';
-      chatSettings.visible = true;
-      saveChatSettings(chatSettings);
+      gameOverlayPanel.style.display = 'none';
+      window.WebMuGameOverlay = false;
     }
+    return;
+  }
+  if (!window.WebMuGameOverlay) return;
+  switch (e.key) {
+    case 'F7': e.preventDefault(); if (!isSplitsRunning) startSplits(); break;
+    case 'F8': e.preventDefault(); if (isSplitsRunning) split(); break;
+    case 'F9': e.preventDefault(); resetSplits(); break;
+    case 'F10': e.preventDefault(); skipSegment(); break;
+    case 'F5': e.preventDefault(); switchProfile(e.shiftKey ? -1 : 1); break;
   }
 });
+
+document.body.appendChild(gameOverlayPanel);
 
 async function initOverlay(gameName) {
   session = readSession();
   if (!session) return;
-
   authToken = session.token;
   currentUser = session.record;
   currentGameName = gameName;
-
+  profiles = getOrCreateProfiles();
+  currentProfileIndex = 0;
+  if (gameName) {
+    for (let i = 0; i < profiles.length; i++) {
+      const profile = profiles[i];
+      if (profile.gameFilter) {
+        try {
+          const regex = new RegExp(profile.gameFilter, 'i');
+          if (regex.test(gameName)) { currentProfileIndex = i; break; }
+        } catch {
+          if (profile.gameFilter.toLowerCase().includes(gameName.toLowerCase())) { currentProfileIndex = i; break; }
+        }
+      }
+    }
+  }
   try {
     await initEncryption();
-
-    const playersSettings = getPlayersSettings();
-    playersPanel.className = 'game-overlay players-' + playersSettings.position;
-    playersPanel.style.opacity = (playersSettings.opacity / 100).toString();
-
-    const chatSettings = getChatSettings();
-    chatPanel.className = 'game-overlay chat-' + chatSettings.position;
-    chatPanel.style.opacity = (chatSettings.opacity / 100).toString();
-
-    const fontMap = { small: '12px', medium: '14px', large: '16px' };
-    chatPanel.style.fontSize = fontMap[chatSettings.fontSize] || '14px';
-
     gameChatId = await findOrCreateGameChat(gameName);
-  } catch (err) {
-    console.error('[initOverlay]', err);
-  }
+  } catch (err) { console.error('[initOverlay]', err); }
 }
 
 function cleanupOverlay() {
-  if (playersPollInterval) {
-    clearInterval(playersPollInterval);
-    playersPollInterval = null;
-  }
-  if (chatPollInterval) {
-    clearInterval(chatPollInterval);
-    chatPollInterval = null;
-  }
+  if (playersPollInterval) { clearInterval(playersPollInterval); playersPollInterval = null; }
+  if (chatPollInterval) { clearInterval(chatPollInterval); chatPollInterval = null; }
 }
 
-window.WebMuOverlay = {
-  initOverlay,
-  cleanupOverlay,
-  togglePlayersPanel,
-  toggleChatPanel,
-  getChatSettings,
-  saveChatSettings
-};
+window.WebMuOverlay = { initOverlay, cleanupOverlay, startSplits, split, resetSplits, skipSegment, switchProfile };

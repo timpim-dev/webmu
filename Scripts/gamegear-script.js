@@ -262,8 +262,8 @@ async function launchROM(rom, name) {
     controlsOverlay.classList.add('hidden');
     
     window.WebMuGameActive = true;
+    window.WebMuGameOverlay = false;
     WebMuOverlay.initOverlay(gameName);
-    WebMuSplits.initSplits(gameName);
   } catch (err) {
     console.error('[gearsystem]', err);
     setStatus('Launch failed: ' + (err?.message || String(err)));
