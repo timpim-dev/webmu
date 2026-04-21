@@ -139,7 +139,7 @@ function launchROM(romUrl, name) {
   gameTopbar.classList.add('active');
   
 window.WebMuGameActive = true;
-    window.WebMuGameOverlay = false;
+    
     WebMuOverlay.initOverlay(gameName);
 
   const script   = document.createElement('script');

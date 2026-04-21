@@ -1610,3 +1610,77 @@ input[type="text"]::placeholder {
       font-size: 11px;
       color: rgba(255, 255, 255, 0.5);
     }
+
+    /* Permanent Splits Overlay */
+    .splits-overlay {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 220px;
+      background: rgba(0, 0, 0, 0.85);
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 13px;
+      color: #fff;
+      z-index: 1000;
+      font-family: monospace;
+    }
+
+    .splits-overlay .splits-header {
+      display: flex;
+      justify-content: space-between;
+      padding-bottom: 6px;
+      margin-bottom: 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .splits-overlay .splits-profile-name {
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    .splits-overlay .splits-time {
+      font-size: 24px;
+      font-weight: 700;
+      text-align: center;
+      padding: 8px 0;
+    }
+
+    .splits-overlay .splits-delta {
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .splits-overlay .splits-delta.ahead { color: #4ade80; }
+    .splits-overlay .splits-delta.behind { color: #f87171; }
+
+    .splits-overlay .splits-segments {
+      margin-top: 8px;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    .splits-overlay .split-segment {
+      display: flex;
+      justify-content: space-between;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .splits-overlay .split-segment.current {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .splits-overlay .split-segment .seg-time {
+      margin-left: 10px;
+    }
+
+    .splits-overlay .splits-controls {
+      padding-top: 6px;
+      margin-top: 6px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      text-align: center;
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.5);
+    }

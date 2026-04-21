@@ -269,7 +269,7 @@ async function launchROM(rom, name) {
     controlsOverlay.classList.add('hidden');
     
     window.WebMuGameActive = true;
-    window.WebMuGameOverlay = false;
+    
     WebMuOverlay.initOverlay(gameName);
   } catch (err) {
     console.error('[genesis_plus_gx]', err);

@@ -257,7 +257,7 @@
       controlsOverlay.classList.add('hidden'); 
       
       window.WebMuGameActive = true;
-      window.WebMuGameOverlay = false;
+      
       WebMuOverlay.initOverlay(gameName);
     } catch (err) {
       console.error('[mGBA]', err);
