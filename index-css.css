@@ -1554,6 +1554,7 @@ input[type="text"]::placeholder {
 
     /* Permanent Splits Overlay */
     .splits-overlay {
+      display: none;
       position: fixed;
       bottom: 20px;
       right: 20px;

@@ -148,12 +148,16 @@ function switchProfile(delta) {
 
 document.addEventListener('keydown', e => {
   if (!window.WebMuGameActive) return;
+  
   switch (e.key) {
-    case 'F7': e.preventDefault(); if (!isRunning) startSplits(); break;
-    case 'F8': e.preventDefault(); if (isRunning) split(); break;
-    case 'F9': e.preventDefault(); resetSplits(); break;
-    case 'F10': e.preventDefault(); skipSegment(); break;
-    case 'F5': e.preventDefault(); switchProfile(e.shiftKey ? -1 : 1); break;
+    case '1': e.preventDefault(); if (!isRunning) startSplits(); break;
+    case '2': e.preventDefault(); if (isRunning) split(); break;
+    case '3': e.preventDefault(); resetSplits(); break;
+    case '4': e.preventDefault(); skipSegment(); break;
+    case '5': e.preventDefault(); switchProfile(e.shiftKey ? -1 : 1); break;
+    case '6': e.preventDefault(); 
+      splitsPanel.style.display = splitsPanel.style.display === 'none' ? 'block' : 'none';
+      break;
   }
 });
 
@@ -162,6 +166,7 @@ document.body.appendChild(splitsPanel);
 function initSplitsOverlay(gameName) {
   profiles = getOrCreateProfiles();
   currentProfileIndex = 0;
+  splitsPanel.style.display = 'block';
   if (gameName) {
     for (let i = 0; i < profiles.length; i++) {
       const profile = profiles[i];

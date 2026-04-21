@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Splits - WebMu</title>
+  <script src="./Scripts/global.js"></script>
+  <link rel="stylesheet" href="index-css.css">
+  <link rel="stylesheet" href="color.css">
+  <style>
+    body { padding: 20px; }
+    .splits-editor { max-width: 600px; margin: 0 auto; }
+    .splits-editor h1 { margin-bottom: 20px; }
+    .profile-list { margin-bottom: 24px; }
+    .profile-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+    .profile-item.active { border-color: var(--accent); }
+    .profile-item input[type="text"] {
+      flex: 1;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--accent);
+      font-size: 14px;
+    }
+    .profile-item select {
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--accent);
+      font-size: 14px;
+    }
+    .seg-list { margin: 16px 0; padding-left: 20px; }
+    .seg-item {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .seg-item input { padding: 6px; }
+    .btn { padding: 8px 16px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--accent); cursor: pointer; }
+    .btn:hover { background: var(--accent); color: var(--bg); }
+    .btn.danger { border-color: #f87171; color: #f87171; }
+    .btn.danger:hover { background: #f87171; color: #fff; }
+    .btn.small { padding: 4px 8px; font-size: 12px; }
+    .keys-hint { margin-top: 20px; padding: 16px; background: var(--card); border-radius: 8px; }
+    .keys-hint kbd { padding: 2px 6px; background: var(--bg); border-radius: 4px; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <nav id="mainNav">
+    <div class="nav-brand">WebMu</div>
+    <a href="index.html">Home</a>
+    <a href="raw.html">Consoles</a>
+    <a href="collection.html">Collection</a>
+    <a href="stats.html">Stats</a>
+    <a href="chat.html">Chat</a>
+    <a href="account.html">Account</a>
+    <a href="splits.html" class="active">Splits</a>
+    <a href="faq.html">FAQ</a>
+    <div class="nav-right">
+      <button class="dark-toggle" id="themeToggle">T</button>
+    </div>
+  </nav>
+
+  <div class="splits-editor">
+    <h1>Splits Editor</h1>
+    
+    <div class="profile-list" id="profileList"></div>
+    
+    <button class="btn" id="addProfileBtn">+ New Profile</button>
+    <button class="btn danger" id="deleteProfileBtn">Delete Profile</button>
+    
+    <div class="seg-list" id="segList"></div>
+    <button class="btn small" id="addSegBtn">+ Add Segment</button>
+    <button class="btn small danger" id="deleteSegBtn">- Remove Segment</button>
+    
+    <div class="keys-hint">
+      <h3>In-Game Controls</h3>
+      <p><kbd>1</kbd> Start splits &nbsp; <kbd>2</kbd> Split &nbsp; <kbd>3</kbd> Reset &nbsp; <kbd>4</kbd> Skip</p>
+      <p><kbd>5</kbd> Next profile &nbsp; <kbd>Shift+5</kbd> Previous profile &nbsp; <kbd>6</kbd> Toggle panel</p>
+    </div>
+  </div>
+
+  <script>
+    const SPLITS_KEY = 'webmu-splits';
+    const SPLITS_SETTINGS_KEY = 'webmu-splits-settings';
+    
+    function getProfiles() {
+      const raw = localStorage.getItem(SPLITS_KEY);
+      try { return raw ? JSON.parse(raw) : []; } catch { return []; }
+    }
+    
+    function saveProfiles(profiles) {
+      localStorage.setItem(SPLITS_KEY, JSON.stringify(profiles));
+    }
+    
+    function getOrCreateProfiles() {
+      let profiles = getProfiles();
+      if (profiles.length === 0) {
+        profiles = [{ name: 'Default', gameFilter: '', segments: [{ name: 'Any%', personalBest: 0 }] }];
+        saveProfiles(profiles));
+      }
+      return profiles;
+    }
+    
+    let profiles = getOrCreateProfiles();
+    let currentProfileIndex = 0;
+    
+    function renderProfiles() {
+      const container = document.getElementById('profileList');
+      container.innerHTML = '';
+      profiles.forEach((p, i) => {
+        const el = document.createElement('div');
+        el.className = 'profile-item' + (i === currentProfileIndex ? ' active' : '');
+        el.innerHTML = `
+          <input type="radio" name="profile" ${i === currentProfileIndex ? 'checked' : ''} data-index="${i}" />
+          <input type="text" class="profile-name" value="${p.name}" data-index="${i}" placeholder="Profile name" />
+          <input type="text" class="profile-filter" value="${p.gameFilter || ''}" data-index="${i}" placeholder="Game filter (regex)" />
+          <button class="btn small danger" data-action="delete" data-index="${i}">×</button>
+        `;
+        container.appendChild(el);
+      });
+      
+      container.querySelectorAll('input[type="radio"]').forEach(r => {
+        r.addEventListener('change', () => {
+          currentProfileIndex = parseInt(r.dataset.index);
+          renderProfiles();
+          renderSegments();
+        });
+      });
+      
+      container.querySelectorAll('.profile-name').forEach(inp => {
+        inp.addEventListener('change', () => {
+          profiles[parseInt(inp.dataset.index)].name = inp.value;
+          saveProfiles(profiles);
+        });
+      });
+      
+      container.querySelectorAll('.profile-filter').forEach(inp => {
+        inp.addEventListener('change', () => {
+          profiles[parseInt(inp.dataset.index)].gameFilter = inp.value;
+          saveProfiles(profiles);
+        });
+      });
+    }
+    
+    function renderSegments() {
+      const container = document.getElementById('segList');
+      const profile = profiles[currentProfileIndex];
+      if (!profile) return;
+      
+      container.innerHTML = '';
+      profile.segments.forEach((seg, i) => {
+        const el = document.createElement('div');
+        el.className = 'seg-item';
+        el.innerHTML = `
+          <input type="text" class="seg-name" value="${seg.name}" data-index="${i}" placeholder="Segment name" />
+          <input type="text" class="seg-pb" value="${seg.personalBest || 0}" data-index="${i}" placeholder="PB (ms)" style="width:80px" readonly />
+        `;
+        container.appendChild(el);
+      });
+      
+      container.querySelectorAll('.seg-name').forEach(inp => {
+        inp.addEventListener('change', () => {
+          profile.segments[parseInt(inp.dataset.index)].name = inp.value;
+          saveProfiles(profiles);
+        });
+      });
+    }
+    
+    document.getElementById('addProfileBtn').addEventListener('click', () => {
+      profiles.push({ name: 'New Profile', gameFilter: '', segments: [{ name: 'Any%', personalBest: 0 }] });
+      currentProfileIndex = profiles.length - 1;
+      saveProfiles(profiles);
+      renderProfiles();
+      renderSegments();
+    });
+    
+    document.getElementById('deleteProfileBtn').addEventListener('click', () => {
+      if (profiles.length <= 1) return;
+      if (!confirm('Delete this profile?')) return;
+      profiles.splice(currentProfileIndex, 1);
+      currentProfileIndex = Math.max(0, currentProfileIndex - 1);
+      saveProfiles(profiles);
+      renderProfiles();
+      renderSegments();
+    });
+    
+    document.getElementById('addSegBtn').addEventListener('click', () => {
+      const profile = profiles[currentProfileIndex];
+      profile.segments.push({ name: 'Segment ' + (profile.segments.length + 1), personalBest: 0 });
+      saveProfiles(profiles);
+      renderSegments();
+    });
+    
+    document.getElementById('deleteSegBtn').addEventListener('click', () => {
+      const profile = profiles[currentProfileIndex];
+      if (profile.segments.length <= 1) return;
+      profile.segments.pop();
+      saveProfiles(profiles);
+      renderSegments();
+    });
+    
+    renderProfiles();
+    renderSegments();
+  </script>
+</body>
+</html>
