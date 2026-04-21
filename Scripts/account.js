@@ -388,8 +388,9 @@ async function bootstrap() {
     }
     updateHeader(user);
     
+    window.WebMuIsAdmin = user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
     const adminNav = document.getElementById('adminNav');
-    if (adminNav && user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+    if (adminNav && window.WebMuIsAdmin) {
       adminNav.style.display = 'block';
     }
     

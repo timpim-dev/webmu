@@ -88,7 +88,7 @@ gameOverlayPanel.innerHTML = `
       <div class="chat-messages"></div>
       <div class="chat-input-area">
         <input type="text" class="chat-input" placeholder="Type..." />
-        <button class="chat-send">Send</button>
+        <button class="chat-send" title="Send">&#9992;</button>
       </div>
     </div>
     <div class="tab-panel" id="splits-panel" style="display:none;">

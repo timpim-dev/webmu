@@ -9,7 +9,7 @@ const ADMIN_EMAIL = 'account@felixx.dev';
 const systemSelect = document.getElementById('systemSelect');
 const gameNameInput = document.getElementById('gameNameInput');
 const romFileInput = document.getElementById('romFileInput');
-const coverFileInput = document.getElementById('coverFileInput');
+const coverUrlInput = document.getElementById('coverUrlInput');
 const uploadBtn = document.getElementById('uploadBtn');
 const uploadStatus = document.getElementById('uploadStatus');
 const gamesList = document.getElementById('gamesList');
@@ -131,7 +131,7 @@ async function uploadGame() {
   const system = systemSelect.value;
   const gameName = gameNameInput.value.trim();
   const romFile = romFileInput.files[0];
-  const coverFile = coverFileInput.files[0];
+  const coverUrl = coverUrlInput.value.trim();
   
   if (!gameName || !romFile) {
     uploadStatus.textContent = 'Please fill in all required fields.';
@@ -143,32 +143,29 @@ async function uploadGame() {
   uploadStatus.textContent = '';
   
   try {
-    const romBase64 = await fileToBase64(romFile);
-    let coverBase64 = '';
-    if (coverFile) {
-      coverBase64 = await fileToBase64(coverFile);
+    const formData = new FormData();
+    formData.append('name', gameName);
+    formData.append('system', system);
+    formData.append('source', romFile);
+    if (coverUrl) {
+      formData.append('coverUrl', coverUrl);
     }
     
-    const body = {
-      name: gameName,
-      system: system,
-      source: romBase64,
-    };
-    
-    if (coverBase64) {
-      body.coverUrl = coverBase64;
-    }
-    
-    await pbRequest(`/api/collections/${PB_GAMES_COLLECTION}/records`, {
+    const res = await fetch(pbUrl(`/api/collections/${PB_GAMES_COLLECTION}/records`), {
       method: 'POST',
-      token: authToken,
-      body: body
+      headers: { Authorization: authToken },
+      body: formData
     });
+    
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || 'Upload failed');
+    }
     
     uploadStatus.textContent = 'Game uploaded successfully!';
     gameNameInput.value = '';
     romFileInput.value = '';
-    coverFileInput.value = '';
+    coverUrlInput.value = '';
     loadGames();
   } catch (e) {
     uploadStatus.textContent = 'Error: ' + e.message;

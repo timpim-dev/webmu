@@ -1,5 +1,7 @@
 (function () {
   const STORAGE_KEY = 'webmu-theme';
+  const ADMIN_EMAIL = 'account@felixx.dev';
+  const SESSION_KEY = 'webmu-pocketbase-session';
 
 const COLORS = {
   light:  { bg: '#ffffff', color: '#000000' },
@@ -66,4 +68,21 @@ function applyTheme(theme) {
 
     updateActive();
   });
+
+  function checkAdminNav() {
+    const sessionRaw = localStorage.getItem(SESSION_KEY);
+    if (!sessionRaw) return;
+    try {
+      const session = JSON.parse(sessionRaw);
+      if (session?.record?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+        document.querySelectorAll('#adminNav').forEach(el => el.style.display = 'block');
+      }
+    } catch (_) {}
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', checkAdminNav);
+  } else {
+    checkAdminNav();
+  }
 })();
