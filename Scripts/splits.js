@@ -267,19 +267,19 @@ document.addEventListener('keydown', e => {
   if (!window.WebMuGameActive) return;
   
   switch (e.key) {
-    case 'F1':
+    case 'F7':
       e.preventDefault();
       if (!isRunning) startSplits();
       break;
-    case 'F2':
+    case 'F8':
       e.preventDefault();
       if (isRunning) split();
       break;
-    case 'F3':
+    case 'F9':
       e.preventDefault();
       resetSplits();
       break;
-    case 'F4':
+    case 'F10':
       e.preventDefault();
       skipSegment();
       break;

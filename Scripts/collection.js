@@ -385,6 +385,7 @@ const modalFileDrop = document.getElementById('modalFileDrop');
 const modalStatus = document.getElementById('modalStatus');
 const emailInput = document.getElementById('emailInput');
 const passwordInput = document.getElementById('passwordInput');
+const passwordConfirmInput = document.getElementById('passwordConfirmInput');
 const emailAuthBtn = document.getElementById('emailAuthBtn');
 const signinToggle = document.getElementById('signinToggle');
 const signinError = document.getElementById('signinError');
@@ -468,16 +469,33 @@ signinToggle.addEventListener('click', () => {
   emailAuthBtn.textContent = isRegistering ? 'Register' : 'Sign in';
   signinToggle.textContent = isRegistering ? 'Already have an account? Sign in' : "Don't have an account? Register";
   signinError.textContent = '';
+  passwordConfirmInput.style.display = isRegistering ? 'block' : 'none';
 });
 
 emailAuthBtn.addEventListener('click', async () => {
   const email = emailInput.value.trim();
   const password = passwordInput.value;
+  const passwordConfirm = passwordConfirmInput.value;
   signinError.textContent = '';
 
   if (!email || !password) {
     signinError.textContent = 'Enter your email and password.';
     return;
+  }
+
+  if (isRegistering) {
+    if (!passwordConfirm) {
+      signinError.textContent = 'Please confirm your password.';
+      return;
+    }
+    if (password !== passwordConfirm) {
+      signinError.textContent = 'Passwords do not match.';
+      return;
+    }
+    if (password.length < 8) {
+      signinError.textContent = 'Password must be at least 8 characters.';
+      return;
+    }
   }
 
   emailAuthBtn.disabled = true;

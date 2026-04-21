@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upload Games - WebMu</title>
+  <script src="./Scripts/global.js"></script>
+  <script src="./Scripts/pocketbase.local.js"></script>
+  <link rel="stylesheet" href="index-css.css">
+  <link rel="stylesheet" href="color.css">
+  <link rel="stylesheet" href="collection.css">
+</head>
+<body>
+
+  <nav id="mainNav">
+    <div class="nav-brand">WebMu</div>
+    <a href="index.html">Home</a>
+    <a href="raw.html">Consoles</a>
+    <a href="collection.html">Collection</a>
+    <a href="stats.html">Stats</a>
+    <a href="chat.html">Chat</a>
+    <a href="account.html">Account</a>
+    <a href="upload.html" class="active">Admin</a>
+    <a href="faq.html">FAQ</a>
+    <div class="nav-right">
+      <button class="dark-toggle" id="themeToggle">T</button>
+    </div>
+  </nav>
+
+  <main class="upload-page">
+    <div class="page">
+      <div class="upload-header">
+        <h1>Upload Games</h1>
+        <p>Upload ROMs to the server for all users to access.</p>
+      </div>
+
+      <div class="upload-form">
+        <div class="form-group">
+          <label for="systemSelect">System</label>
+          <select id="systemSelect" class="text-input">
+            <option value="nes">NES / Famicom</option>
+            <option value="snes">Super NES / Super Famicom</option>
+            <option value="gameboy">Game Boy / GBC / GBA</option>
+            <option value="gamewatch">Game & Watch</option>
+            <option value="genesis">Genesis / Mega Drive</option>
+            <option value="gamegear">Game Gear</option>
+            <option value="playstation">PlayStation</option>
+            <option value="psp">PSP</option>
+            <option value="n64">Nintendo 64</option>
+            <option value="nds">Nintendo DS</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="gameNameInput">Game Name</label>
+          <input type="text" id="gameNameInput" class="text-input" placeholder="Game Name" />
+        </div>
+
+        <div class="form-group">
+          <label for="romFileInput">ROM File</label>
+          <input type="file" id="romFileInput" accept=".nes,.fc,.snes,.sfc,.gb,.gbc,.gba,.gg,.md,.gen,.bin,.iso,.cue,.zip,.n64,.z64,.v64,.nds,.3ds" />
+        </div>
+
+        <div class="form-group">
+          <label for="coverFileInput">Cover Image (Optional)</label>
+          <input type="file" id="coverFileInput" accept="image/*" />
+        </div>
+
+        <div class="upload-actions">
+          <button class="btn primary" id="uploadBtn">Upload Game</button>
+        </div>
+
+        <div class="upload-status" id="uploadStatus"></div>
+      </div>
+
+      <div class="uploaded-games">
+        <h2>Uploaded Games</h2>
+        <div class="games-list" id="gamesList">
+          <div class="loading-state">Loading...</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="./Scripts/upload.js"></script>
+</body>
+</html>

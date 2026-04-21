@@ -377,6 +377,8 @@ async function persistAvatar(file) {
   updateHeader(currentUser);
 }
 
+const ADMIN_EMAIL = 'account@felixx.dev';
+
 async function bootstrap() {
   try {
     const user = await refreshAuth();
@@ -385,6 +387,12 @@ async function bootstrap() {
       return;
     }
     updateHeader(user);
+    
+    const adminNav = document.getElementById('adminNav');
+    if (adminNav && user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+      adminNav.style.display = 'block';
+    }
+    
     const games = await loadGames(user.id);
     allGames = games;
     computeStats(games);

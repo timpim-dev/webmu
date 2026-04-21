@@ -338,3 +338,118 @@ html, body {
     justify-content: center;
   }
 }
+
+.upload-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 28px 24px 80px;
+}
+
+.upload-header {
+  margin-bottom: 24px;
+}
+
+.upload-header h1 {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.upload-header p {
+  color: var(--muted);
+}
+
+.upload-form {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 32px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.form-group .text-input,
+.form-group select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--accent);
+  font-size: 14px;
+}
+
+.upload-actions {
+  margin-top: 20px;
+}
+
+.upload-actions .btn {
+  padding: 12px 24px;
+}
+
+.upload-status {
+  margin-top: 16px;
+  font-size: 14px;
+  color: var(--accent);
+}
+
+.uploaded-games {
+  margin-top: 32px;
+}
+
+.uploaded-games h2 {
+  font-size: 20px;
+  margin-bottom: 16px;
+}
+
+.games-list {
+  display: grid;
+  gap: 12px;
+}
+
+.uploaded-game-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.uploaded-game-item .game-info {
+  flex: 1;
+}
+
+.uploaded-game-item .game-name {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.uploaded-game-item .game-system {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.uploaded-game-item .delete-btn {
+  padding: 8px 16px;
+  background: #f87171;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.uploaded-game-item .delete-btn:hover {
+  background: #dc2626;
+}
