@@ -350,7 +350,6 @@ async function listPublicGames() {
       page: String(page),
       perPage: '200',
       sort: '-created',
-      filter: `source!="" && source!="null"`,
     });
     const res = await pbRequest(`/api/collections/${PB_GAMES_COLLECTION}/records?${qs.toString()}`);
     items.push(...(res.items || []));
