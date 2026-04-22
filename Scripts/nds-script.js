@@ -16,8 +16,6 @@ const coverImg     = document.getElementById('coverImg');
 const coverTitle   = document.getElementById('coverTitle');
 const kbdGrid      = document.getElementById('kbdGrid');
 const launchName = sessionStorage.getItem('webmu-launch-name');
-const streamUrl = sessionStorage.getItem('webmu-stream-url');
-if (streamUrl) sessionStorage.removeItem('webmu-stream-url');
 
 let ejsLoaded = false;
 
@@ -48,9 +46,6 @@ if (launchName) {
       if (file) {
         const url = URL.createObjectURL(file);
         launchROM(url, launchName);
-      } else if (streamUrl) {
-        launchROM(streamUrl, launchName);
-      }
     };
   })();
 }

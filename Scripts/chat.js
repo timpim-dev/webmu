@@ -227,6 +227,7 @@ async function openChat(id, type, title) {
   messageList.innerHTML = '<div class="library-meta">Loading messages...</div>';
   editingMessageId = null;
   groupCreatorId = null;
+  lastMessageId = null;
   
   if (type === 'group') {
     try {

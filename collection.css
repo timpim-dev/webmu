@@ -416,8 +416,14 @@ nav a.active {
   color: var(--highlight-color);
 }
 
-.tab-btn:hover:not(.active) {
+.tab-btn:hover:not(.active):not(.disabled) {
   color: var(--accent);
+}
+
+.tab-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .empty-state {
