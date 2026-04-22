@@ -140,7 +140,7 @@ if (launchName) {
       
       window.WebMuGameActive = true;
       
-      WebMuOverlay.initOverlay(gameName);
+      WebMuSplits.initSplits(gameName);
 
       const script    = document.createElement('script');
       script.src      = 'https://cdn.emulatorjs.org/stable/data/loader.js';
@@ -167,8 +167,7 @@ if (launchName) {
     });
 
     function closeGame() {
-      window.WebMuGameActive = false;
-      WebMuOverlay.cleanupOverlay();
+window.WebMuGameActive = false;
       window.location.reload();
     }
 

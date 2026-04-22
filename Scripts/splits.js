@@ -2,8 +2,6 @@ const SPLITS_KEY = 'webmu-splits';
 const SPLITS_SETTINGS_KEY = 'webmu-splits-settings';
 
 const DEFAULT_SETTINGS = {
-  position: 'bottom-left',
-  fontSize: 'medium',
   visible: false
 };
 
@@ -17,11 +15,7 @@ const DEFAULT_PROFILE = {
 
 function getSettings() {
   const raw = localStorage.getItem(SPLITS_SETTINGS_KEY);
-  try {
-    return raw ? JSON.parse(raw) : DEFAULT_SETTINGS;
-  } catch {
-    return DEFAULT_SETTINGS;
-  }
+  try { return raw ? JSON.parse(raw) : DEFAULT_SETTINGS; } catch { return DEFAULT_SETTINGS; }
 }
 
 function saveSettings(settings) {
@@ -30,11 +24,7 @@ function saveSettings(settings) {
 
 function getProfiles() {
   const raw = localStorage.getItem(SPLITS_KEY);
-  try {
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
+  try { return raw ? JSON.parse(raw) : []; } catch { return []; }
 }
 
 function saveProfiles(profiles) {
@@ -57,21 +47,25 @@ let startTime = 0;
 let currentSegment = 0;
 let segmentTimes = [];
 let pausedTime = 0;
+let rafId = null;
+let panelOpen = false;
 
-const splitsPanel = document.createElement('div');
-splitsPanel.id = 'splits-panel';
-splitsPanel.className = 'game-overlay';
-splitsPanel.style.display = 'none';
-splitsPanel.innerHTML = `
-  <div class="splits-titlebar">
+const PANEL_WIDTH = 280;
+
+const panel = document.createElement('div');
+panel.id = 'splits-panel';
+panel.innerHTML = `
+  <div class="splits-header">
     <span class="splits-profile-name">Default</span>
-    <button class="splits-close">&times;</button>
+    <button class="splits-close" id="splits-close-btn" title="Close">&times;</button>
   </div>
-  <div class="splits-timer">00:00.000</div>
-  <div class="splits-delta-total"></div>
-  <div class="splits-segment-list"></div>
+  <div class="splits-body">
+    <div class="splits-timer">00:00.000</div>
+    <div class="splits-delta"></div>
+    <div class="splits-segments"></div>
+  </div>
   <div class="splits-footer">
-    <span class="splits-key-hint">F7 Start · F8 Split · F9 Reset · F10 Skip</span>
+    <span>1 Start &nbsp; 2 Split &nbsp; 3 Reset &nbsp; 4 Skip &nbsp; 5 Profile &nbsp; 6 Toggle</span>
   </div>
 `;
 
@@ -81,37 +75,29 @@ function formatTime(ms) {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   const millis = ms % 1000;
-  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${millis.toString().padStart(3, '0')}`;
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(millis).padStart(3, '0')}`;
 }
 
 function formatDelta(ms) {
   if (!ms || ms === 0) return '';
-  const sign = ms > 0 ? '+' : '-';
-  return sign + formatTime(Math.abs(ms));
+  return (ms > 0 ? '+' : '-') + formatTime(Math.abs(ms));
 }
 
 function renderSegments() {
   const profile = profiles[currentProfileIndex];
   if (!profile) return;
-  
-  const container = splitsPanel.querySelector('.splits-segments');
+  const container = panel.querySelector('.splits-segments');
   container.innerHTML = '';
-  
   profile.segments.forEach((seg, idx) => {
     const el = document.createElement('div');
     el.className = 'split-segment';
     if (idx === currentSegment) el.classList.add('current');
-    if (segmentTimes[idx] !== undefined) el.classList.add('completed');
-    
+    if (segmentTimes[idx] !== undefined && segmentTimes[idx] >= 0) el.classList.add('completed');
+    if (segmentTimes[idx] === -1) el.classList.add('skipped');
     const time = segmentTimes[idx] || 0;
     const pb = seg.personalBest || 0;
     const delta = time > 0 && pb > 0 ? time - pb : 0;
-    
-    el.innerHTML = `
-      <span class="seg-name">${seg.name}</span>
-      <span class="seg-time">${formatTime(time)}</span>
-      <span class="seg-delta">${formatDelta(delta)}</span>
-    `;
+    el.innerHTML = `<span class="seg-name">${seg.name}</span><span class="seg-time">${formatTime(time)}</span><span class="seg-delta">${formatDelta(delta)}</span>`;
     container.appendChild(el);
   });
 }
@@ -119,21 +105,31 @@ function renderSegments() {
 function renderSplits() {
   const profile = profiles[currentProfileIndex];
   if (!profile) return;
-  
-  splitsPanel.querySelector('.splits-profile-name').textContent = profile.name;
-  
+  panel.querySelector('.splits-profile-name').textContent = profile.name;
   const totalTime = isRunning ? Date.now() - startTime + pausedTime : pausedTime;
-  splitsPanel.querySelector('.splits-time').textContent = formatTime(totalTime);
-  
-  if (profile && profile.segments.length > 0) {
+  panel.querySelector('.splits-timer').textContent = formatTime(totalTime);
+  if (profile.segments.length > 0) {
     const pbTotal = profile.segments.reduce((sum, s) => sum + (s.personalBest || 0), 0);
     const delta = totalTime - pbTotal;
-    const deltaEl = splitsPanel.querySelector('.splits-delta');
+    const deltaEl = panel.querySelector('.splits-delta');
     deltaEl.textContent = formatDelta(delta);
     deltaEl.className = 'splits-delta ' + (delta > 0 ? 'behind' : delta < 0 ? 'ahead' : '');
   }
-  
   renderSegments();
+}
+
+function tick() {
+  if (!isRunning) return;
+  panel.querySelector('.splits-timer').textContent = formatTime(Date.now() - startTime + pausedTime);
+  const profile = profiles[currentProfileIndex];
+  if (profile && profile.segments.length > 0) {
+    const pbTotal = profile.segments.reduce((sum, s) => sum + (s.personalBest || 0), 0);
+    const delta = Date.now() - startTime + pausedTime - pbTotal;
+    const deltaEl = panel.querySelector('.splits-delta');
+    deltaEl.textContent = formatDelta(delta);
+    deltaEl.className = 'splits-delta ' + (delta > 0 ? 'behind' : delta < 0 ? 'ahead' : '');
+  }
+  rafId = requestAnimationFrame(tick);
 }
 
 function initSplits(gameName) {
@@ -144,27 +140,23 @@ function initSplits(gameName) {
   isRunning = false;
   startTime = 0;
   pausedTime = 0;
-  
+  if (rafId) cancelAnimationFrame(rafId);
   if (gameName) {
     for (let i = 0; i < profiles.length; i++) {
-      const profile = profiles[i];
-      if (profile.gameFilter) {
+      const p = profiles[i];
+      if (p.gameFilter) {
         try {
-          const regex = new RegExp(profile.gameFilter, 'i');
-          if (regex.test(gameName)) {
-            currentProfileIndex = i;
-            break;
-          }
+          if (new RegExp(p.gameFilter, 'i').test(gameName)) { currentProfileIndex = i; break; }
         } catch {
-          if (profile.gameFilter.toLowerCase().includes(gameName.toLowerCase())) {
-            currentProfileIndex = i;
-            break;
-          }
+          if (p.gameFilter.toLowerCase().includes(gameName.toLowerCase())) { currentProfileIndex = i; break; }
         }
       }
     }
   }
-  
+  const settings = getSettings();
+  panelOpen = settings.visible;
+  panel.classList.toggle('open', panelOpen);
+  document.body.classList.toggle('splits-open', panelOpen);
   renderSplits();
 }
 
@@ -176,31 +168,27 @@ function startSplits() {
   currentSegment = 0;
   segmentTimes = [];
   renderSplits();
+  tick();
 }
 
 function split() {
   if (!isRunning) return;
   const profile = profiles[currentProfileIndex];
   if (!profile) return;
-  
   const now = Date.now() - startTime + pausedTime;
   segmentTimes[currentSegment] = now;
-  
   if (profile.segments[currentSegment]) {
-    profile.segments[currentSegment].personalBest = Math.min(
-      profile.segments[currentSegment].personalBest || now,
-      now
-    );
+    const seg = profile.segments[currentSegment];
+    seg.personalBest = seg.personalBest === 0 ? now : Math.min(seg.personalBest, now);
     saveProfiles(profiles);
   }
-  
   if (currentSegment < profile.segments.length - 1) {
     currentSegment++;
   } else {
     isRunning = false;
     pausedTime = now;
+    if (rafId) cancelAnimationFrame(rafId);
   }
-  
   renderSplits();
 }
 
@@ -209,6 +197,7 @@ function resetSplits() {
   currentSegment = 0;
   segmentTimes = [];
   pausedTime = 0;
+  if (rafId) cancelAnimationFrame(rafId);
   renderSplits();
 }
 
@@ -216,15 +205,13 @@ function skipSegment() {
   if (!isRunning) return;
   const profile = profiles[currentProfileIndex];
   if (!profile) return;
-  
   segmentTimes[currentSegment] = -1;
-  
   if (currentSegment < profile.segments.length - 1) {
     currentSegment++;
   } else {
     isRunning = false;
+    if (rafId) cancelAnimationFrame(rafId);
   }
-  
   renderSplits();
 }
 
@@ -236,64 +223,151 @@ function switchProfile(delta) {
 }
 
 function toggleSplits() {
+  panelOpen = !panelOpen;
   const settings = getSettings();
-  settings.visible = !settings.visible;
+  settings.visible = panelOpen;
   saveSettings(settings);
-  splitsPanel.style.display = settings.visible ? 'block' : 'none';
-  if (settings.visible) renderSplits();
+  panel.classList.toggle('open', panelOpen);
+  document.body.classList.toggle('splits-open', panelOpen);
 }
 
-function updateSplitsPosition(position) {
-  const settings = getSettings();
-  settings.position = position;
-  saveSettings(settings);
-  
-  splitsPanel.className = 'game-overlay splits-' + position;
-}
-
-function updateSplitsFontSize(size) {
-  const settings = getSettings();
-  settings.fontSize = size;
-  saveSettings(settings);
-  
-  splitsPanel.style.fontSize = size === 'small' ? '12px' : size === 'large' ? '16px' : '14px';
-}
-
-splitsPanel.querySelector('.splits-close').addEventListener('click', () => {
-  const settings = getSettings();
-  settings.visible = false;
-  saveSettings(settings);
-  splitsPanel.style.display = 'none';
+panel.querySelector('.splits-close').addEventListener('click', () => {
+  if (!panelOpen) return;
+  toggleSplits();
 });
 
 document.addEventListener('keydown', e => {
   if (!window.WebMuGameActive) return;
-  
   switch (e.key) {
-    case 'F7':
+    case '1':
       e.preventDefault();
-      if (!isRunning) startSplits();
+      startSplits();
       break;
-    case 'F8':
+    case '2':
       e.preventDefault();
-      if (isRunning) split();
+      split();
       break;
-    case 'F9':
+    case '3':
       e.preventDefault();
       resetSplits();
       break;
-    case 'F10':
+    case '4':
       e.preventDefault();
       skipSegment();
       break;
-    case 'F5':
+    case '5':
       e.preventDefault();
       switchProfile(e.shiftKey ? -1 : 1);
+      break;
+    case '6':
+      e.preventDefault();
+      toggleSplits();
       break;
   }
 });
 
-document.body.appendChild(splitsPanel);
+document.head.insertAdjacentHTML('beforeend', `
+<style>
+#splits-panel {
+  position: fixed;
+  top: 0;
+  right: -${PANEL_WIDTH}px;
+  width: ${PANEL_WIDTH}px;
+  height: 100vh;
+  background: var(--card);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  z-index: 9001;
+  transition: right 0.2s ease;
+  font-size: 13px;
+  overflow: hidden;
+}
+#splits-panel.open {
+  right: 0;
+}
+.splits-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.splits-profile-name {
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 14px;
+}
+.splits-close {
+  background: none;
+  border: none;
+  color: var(--muted2);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+.splits-close:hover { color: var(--accent); }
+.splits-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+}
+.splits-timer {
+  font-family: monospace;
+  font-size: 22px;
+  color: var(--accent);
+  letter-spacing: 0.5px;
+  text-align: center;
+  margin-bottom: 4px;
+}
+.splits-delta {
+  text-align: center;
+  font-size: 12px;
+  font-family: monospace;
+  margin-bottom: 12px;
+  min-height: 16px;
+}
+.splits-delta.ahead { color: #4ade80; }
+.splits-delta.behind { color: #f87171; }
+.splits-segments {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.split-segment {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 5px 8px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+}
+.split-segment.current {
+  background: var(--bg);
+  border-color: var(--accent);
+}
+.split-segment.completed .seg-time { color: var(--accent); }
+.split-segment.skipped { opacity: 0.4; }
+.seg-name { color: var(--muted2); }
+.seg-time { font-family: monospace; color: var(--accent); font-size: 12px; }
+.seg-delta { font-family: monospace; font-size: 11px; min-width: 70px; text-align: right; }
+.seg-delta.ahead { color: #4ade80; }
+.seg-delta.behind { color: #f87171; }
+.splits-footer {
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--muted2);
+  text-align: center;
+  flex-shrink: 0;
+}
+</style>
+`);
+
+document.body.appendChild(panel);
 
 window.WebMuSplits = {
   initSplits,
@@ -306,7 +380,5 @@ window.WebMuSplits = {
   getProfiles,
   saveProfiles,
   getSettings,
-  saveSettings,
-  updateSplitsPosition,
-  updateSplitsFontSize
+  saveSettings
 };

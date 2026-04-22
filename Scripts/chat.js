@@ -263,8 +263,7 @@ async function loadMessages() {
     const res = await pbRequest(`/api/collections/${PB_MESSAGES_COLLECTION}/records?${qs.toString()}`, { token: authToken });
     const messages = res.items || [];
     
-    // Only re-render if we have new messages
-    if (messages.length > 0 && messages[messages.length - 1].id === lastMessageId) return;
+    if (lastMessageId !== null && messages.length > 0 && messages[messages.length - 1].id === lastMessageId) return;
     
     messageList.innerHTML = '';
     for (const msg of messages) {

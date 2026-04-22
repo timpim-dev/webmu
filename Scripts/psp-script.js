@@ -143,7 +143,7 @@ function launchROM(romUrl, name) {
   
   window.WebMuGameActive = true;
   
-  WebMuOverlay.initOverlay(gameName);
+  WebMuSplits.initSplits(gameName);
 
   const script   = document.createElement('script');
   script.src     = 'https://cdn.emulatorjs.org/stable/data/loader.js';
@@ -171,7 +171,6 @@ launchBtn.addEventListener('click', () => {
 
 function closeGame() {
   window.WebMuGameActive = false;
-  WebMuOverlay.cleanupOverlay();
   window.location.reload();
 }
 

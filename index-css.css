@@ -401,6 +401,7 @@ footer {
   justify-content: space-between;
   padding: 0 16px;
   z-index: 9999;
+  transition: right 0.2s ease;
 }
 
 #game-topbar.active {
@@ -468,7 +469,7 @@ footer {
   align-items: center;
   gap: 10px;
   z-index: 9998;
-  transition: opacity 0.4s;
+  transition: opacity 0.4s, right 0.2s ease;
 }
 
 #controls-overlay.active {
@@ -895,6 +896,16 @@ input[type="text"]::placeholder {
 #game {
   width: 100%;
   height: 100%;
+  transition: width 0.2s ease;
+}
+body.splits-open #game {
+  width: calc(100% - 280px);
+}
+body.splits-open #game-topbar {
+  right: 280px;
+}
+body.splits-open #controls-overlay {
+  right: 280px;
 }
     
 .faq-wrap {

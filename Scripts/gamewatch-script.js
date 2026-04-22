@@ -218,12 +218,12 @@ async function closeGame() {
   controlsOverlay.classList.remove('active');
   controlsOverlay.classList.remove('hidden');
   mainNav.classList.remove('hidden');
+  document.body.classList.remove('nostalgist-active');
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
   setLoading(false);
   setStatus('');
   
   window.WebMuGameActive = false;
-  WebMuOverlay.cleanupOverlay();
 }
 closeBtn.addEventListener('click', closeGame);
 document.addEventListener('keydown', e => {
@@ -252,6 +252,7 @@ async function launchROM(rom, name) {
         input_player1_start:      'enter',
       },
     });
+    document.body.classList.add('nostalgist-active');
     applyVolume();
     setLoading(false);
     const gameName = name || 'Game & Watch';
@@ -263,7 +264,7 @@ async function launchROM(rom, name) {
     
     window.WebMuGameActive = true;
     
-    WebMuOverlay.initOverlay(gameName);
+    WebMuSplits.initSplits(gameName);
   } catch (err) {
     console.error('[gw]', err);
     setStatus('Launch failed: ' + (err?.message || String(err)));
