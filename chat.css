@@ -191,6 +191,13 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  
+}
+
+.input-area #sendBtn {
+  width: auto;
+  flex-shrink: 0;
+  padding: 10px 18px;
 }
 
 .img-upload-label {
