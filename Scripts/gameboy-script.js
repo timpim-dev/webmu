@@ -20,6 +20,8 @@
   const coverTitle      = document.getElementById('coverTitle');
   const kbdGrid         = document.getElementById('kbdGrid');
   const launchName = sessionStorage.getItem('webmu-launch-name');
+  const streamUrl = sessionStorage.getItem('webmu-stream-url');
+  if (streamUrl) sessionStorage.removeItem('webmu-stream-url');
 
   let instance  = null;
   let idleTimer = null;
@@ -59,6 +61,8 @@
       if (file) {
         const url = URL.createObjectURL(file);
         launchROM(url, launchName);
+      } else if (streamUrl) {
+        launchROM(streamUrl, launchName);
       }
     };
   })();
@@ -226,7 +230,7 @@
     setStatus('');
     
     window.WebMuGameActive = false;
-    WebMuOverlay.cleanupOverlay();
+    
   }
   closeBtn.addEventListener('click', closeGame);
   document.addEventListener('keydown', e => {
@@ -258,7 +262,7 @@
       
       window.WebMuGameActive = true;
       
-      WebMuOverlay.initOverlay(gameName);
+      WebMuSplits.initSplits(gameName);
     } catch (err) {
       console.error('[mGBA]', err);
       setStatus('Launch failed: ' + (err?.message || String(err)));

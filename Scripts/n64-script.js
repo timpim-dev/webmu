@@ -16,6 +16,8 @@ const coverImg     = document.getElementById('coverImg');
 const coverTitle   = document.getElementById('coverTitle');
 const kbdGrid      = document.getElementById('kbdGrid');
 const launchName = sessionStorage.getItem('webmu-launch-name');
+const streamUrl = sessionStorage.getItem('webmu-stream-url');
+if (streamUrl) sessionStorage.removeItem('webmu-stream-url');
 
 let ejsLoaded = false;
 
@@ -46,6 +48,8 @@ if (launchName) {
       if (file) {
         const url = URL.createObjectURL(file);
         launchROM(url, launchName);
+      } else if (streamUrl) {
+        launchROM(streamUrl, launchName);
       }
     };
   })();
@@ -140,7 +144,7 @@ function launchROM(romUrl, name) {
   
 window.WebMuGameActive = true;
     
-    WebMuOverlay.initOverlay(gameName);
+    WebMuSplits.initSplits(gameName);
 
   const script   = document.createElement('script');
   script.src     = 'https://cdn.emulatorjs.org/stable/data/loader.js';
@@ -168,7 +172,6 @@ launchBtn.addEventListener('click', () => {
 
 function closeGame() {
   window.WebMuGameActive = false;
-  WebMuOverlay.cleanupOverlay();
   window.location.reload();
 }
 
