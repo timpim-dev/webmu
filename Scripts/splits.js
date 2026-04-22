@@ -63,13 +63,16 @@ splitsPanel.id = 'splits-panel';
 splitsPanel.className = 'game-overlay';
 splitsPanel.style.display = 'none';
 splitsPanel.innerHTML = `
-  <div class="splits-header">
+  <div class="splits-titlebar">
     <span class="splits-profile-name">Default</span>
     <button class="splits-close">&times;</button>
   </div>
-  <div class="splits-time">00:00.000</div>
-  <div class="splits-delta"></div>
-  <div class="splits-segments"></div>
+  <div class="splits-timer">00:00.000</div>
+  <div class="splits-delta-total"></div>
+  <div class="splits-segment-list"></div>
+  <div class="splits-footer">
+    <span class="splits-key-hint">F7 Start · F8 Split · F9 Reset · F10 Skip</span>
+  </div>
 `;
 
 function formatTime(ms) {
