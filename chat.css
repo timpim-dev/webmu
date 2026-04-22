@@ -136,14 +136,14 @@
 }
 
 .sent .msg-bubble {
-  background: var(--accent);
-  color: white;
+  background: var(--highlight-bg);
+  color: var(--highlight-color);
   border-bottom-right-radius: 4px;
 }
 
 .received .msg-bubble {
-  background: var(--bg);
-  color: var(--text);
+  background: var(--input-bg);
+  color: var(--accent);
   border: 1px solid var(--border);
   border-bottom-left-radius: 4px;
 }
