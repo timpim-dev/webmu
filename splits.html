@@ -7,25 +7,7 @@
   <script src="./Scripts/global.js"></script>
   <link rel="stylesheet" href="index-css.css">
   <link rel="stylesheet" href="color.css">
-  <style>
-    body { padding: 20px; }
-    .splits-editor { max-width: 600px; margin: 0 auto; }
-    .splits-editor h1 { margin-bottom: 20px; }
-    .profile-list { margin-bottom: 24px; }
-    .profile-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; }
-    .profile-item.active { border-color: var(--accent); }
-    .profile-item input[type="text"] { flex: 1; padding: 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); color: var(--accent); font-size: 14px; }
-    .seg-list { margin: 16px 0; padding-left: 20px; }
-    .seg-item { display: flex; gap: 8px; margin-bottom: 8px; }
-    .seg-item input { padding: 6px; }
-    .btn { padding: 8px 16px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--accent); cursor: pointer; }
-    .btn:hover { background: var(--accent); color: var(--bg); }
-    .btn.danger { border-color: #f87171; color: #f87171; }
-    .btn.danger:hover { background: #f87171; color: #fff; }
-    .btn.small { padding: 4px 8px; font-size: 12px; }
-    .keys-hint { margin-top: 20px; padding: 16px; background: var(--card); border-radius: 8px; }
-    .keys-hint kbd { padding: 2px 6px; background: var(--bg); border-radius: 4px; font-family: monospace; }
-  </style>
+  <link rel="stylesheet" href="splits.css">
 </head>
 <body>
   <nav id="mainNav">
@@ -33,6 +15,7 @@
     <a href="index.html">Home</a>
     <a href="raw.html">Consoles</a>
     <a href="collection.html">Collection</a>
+    <a href="contribute.html">Contribute</a>
     <a href="stats.html">Stats</a>
     <a href="chat.html">Chat</a>
     <a href="account.html">Account</a>
@@ -43,17 +26,35 @@
     </div>
   </nav>
 
-  <div class="splits-editor">
-    <h1>Splits Editor</h1>
-    <div class="profile-list" id="profileList"></div>
-    <button class="btn" id="addProfileBtn">+ New Profile</button>
-    <button class="btn danger" id="deleteProfileBtn">Delete Profile</button>
-    <div class="seg-list" id="segList"></div>
-    <button class="btn small" id="addSegBtn">+ Add Segment</button>
-    <button class="btn small danger" id="deleteSegBtn">- Remove Segment</button>
+  <div class="splits-container">
+    <div class="panel-kicker">Splits Management</div>
+    <h2>Splits Editor</h2>
+    
+    <div class="editor-layout">
+      <div class="profiles-column">
+        <div class="section-header">
+          <h3>Profiles</h3>
+          <button class="btn primary small" id="addProfileBtn" style="width: auto; padding: 6px 12px;">+ New</button>
+        </div>
+        <div id="profileList" class="profile-list"></div>
+        <button class="btn danger small" id="deleteProfileBtn">Delete Selected Profile</button>
+      </div>
+      
+      <div class="segments-column">
+        <div class="section-header">
+          <h3>Segments</h3>
+          <div class="segment-actions" style="display:flex; gap:8px;">
+            <button class="btn small" id="addSegBtn">+ Add</button>
+            <button class="btn small danger" id="deleteSegBtn">- Remove</button>
+          </div>
+        </div>
+        <div id="segList" class="seg-list"></div>
+      </div>
+    </div>
+
     <div class="keys-hint">
       <h3>In-Game Controls</h3>
-      <p><kbd>1</kbd> Start &nbsp; <kbd>2</kbd> Split &nbsp; <kbd>3</kbd> Reset &nbsp; <kbd>4</kbd> Skip &nbsp; <kbd>5</kbd> Profile &nbsp; <kbd>6</kbd> Toggle</p>
+      <p><kbd>F7</kbd> Start &nbsp; <kbd>F8</kbd> Split &nbsp; <kbd>F9</kbd> Reset &nbsp; <kbd>F10</kbd> Skip &nbsp; <kbd>F5</kbd> Next Profile &nbsp; <kbd>Shift+F5</kbd> Prev Profile</p>
     </div>
   </div>
 
@@ -90,7 +91,7 @@
         const el = document.createElement('div');
         el.className = 'seg-item';
         el.innerHTML = '<input type="text" class="seg-name" value="' + s.name + '" data-index="' + i + '" placeholder="Segment name" />' +
-          '<input type="text" class="seg-pb" value="' + (s.personalBest || 0) + '" data-index="' + i + '" placeholder="PB (ms)" style="width:80px" readonly />';
+          '<input type="text" class="seg-pb" value="' + (s.personalBest || 0) + '" data-index="' + i + '" placeholder="PB (ms)" readonly />';
         c.appendChild(el);
       });
       c.querySelectorAll('.seg-name').forEach(inp => inp.addEventListener('change', () => { p.segments[parseInt(inp.dataset.index)].name = inp.value; saveProfiles(profiles); }));

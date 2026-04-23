@@ -65,36 +65,60 @@ async function pbRequest(path, { method = 'GET', token = null, body = null, keep
   return data;
 }
 
+let flushed = false;
+
 async function flushPlayStats() {
   const meta = readLaunchMeta();
   const session = readSession();
-  if (!meta || !session) return;
-  if (flushPlayStats._flushed) return;
-
-  flushPlayStats._flushed = true;
-  clearLaunchMeta();
+  
+  if (!meta || !session) {
+    if (!meta) console.warn("[play-tracker] Missing launch meta");
+    if (!session) console.warn("[play-tracker] Missing session");
+    return;
+  }
+  
+  if (flushed) return;
 
   if (!meta.gameId) return;
 
   const startedAt = Number(meta.launchedAt || Date.now());
   const durationSeconds = Math.max(1, Math.round((Date.now() - startedAt) / 1000));
-  const record = await pbRequest(`/api/collections/${PB_GAMES_COLLECTION}/records/${meta.gameId}`, {
-    token: session.token,
-  });
+  
+  try {
+    const record = await pbRequest(`/api/collections/${PB_GAMES_COLLECTION}/records/${meta.gameId}`, {
+      token: session.token,
+    });
 
-  const playCount = Number(record.playCount || 0) + 1;
-  const totalPlaySeconds = Number(record.totalPlaySeconds || 0) + durationSeconds;
+    const playCount = Number(record.playCount || 0) + 1;
+    const totalPlaySeconds = Number(record.totalPlaySeconds || 0) + durationSeconds;
 
-  await pbRequest(`/api/collections/${PB_GAMES_COLLECTION}/records/${meta.gameId}`, {
-    method: 'PATCH',
-    token: session.token,
-    keepalive: true,
-    body: {
+    const path = `/api/collections/${PB_GAMES_COLLECTION}/records/${meta.gameId}`;
+    const body = {
       playCount,
       totalPlaySeconds,
       lastPlayedAt: new Date().toISOString(),
-    },
-  });
+    };
+
+    try {
+      await pbRequest(path, {
+        method: 'PATCH',
+        token: session.token,
+        keepalive: true,
+        body,
+      });
+      flushed = true;
+      clearLaunchMeta();
+    } catch (e) {
+      console.warn('[play-tracker] fetch keepalive failed, trying beacon fallback', e);
+      console.warn('[play-tracker] sendBeacon PATCH is not supported by PocketBase — beacon fires as POST and will be ignored by the server. fetch keepalive is the real save path.');
+      
+      const blob = new Blob([JSON.stringify(body)], { type: 'application/json' });
+      navigator.sendBeacon(pbUrl(path + '?_method=PATCH'), blob);
+      // We don't set flushed=true here because beacon is best-effort and we don't know if it succeeded
+    }
+  } catch (err) {
+    console.error("[play-tracker] Failed to flush play stats", err);
+  }
 }
 
 const launchMeta = readLaunchMeta();

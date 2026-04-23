@@ -94,7 +94,7 @@ function renderSegments() {
   const profile = profiles[currentProfileIndex];
   if (!profile) return;
   
-  const container = splitsPanel.querySelector('.splits-segments');
+  const container = splitsPanel.querySelector('.splits-segment-list');
   container.innerHTML = '';
   
   profile.segments.forEach((seg, idx) => {
@@ -123,14 +123,14 @@ function renderSplits() {
   splitsPanel.querySelector('.splits-profile-name').textContent = profile.name;
   
   const totalTime = isRunning ? Date.now() - startTime + pausedTime : pausedTime;
-  splitsPanel.querySelector('.splits-time').textContent = formatTime(totalTime);
+  splitsPanel.querySelector('.splits-timer').textContent = formatTime(totalTime);
   
   if (profile && profile.segments.length > 0) {
     const pbTotal = profile.segments.reduce((sum, s) => sum + (s.personalBest || 0), 0);
     const delta = totalTime - pbTotal;
-    const deltaEl = splitsPanel.querySelector('.splits-delta');
+    const deltaEl = splitsPanel.querySelector('.splits-delta-total');
     deltaEl.textContent = formatDelta(delta);
-    deltaEl.className = 'splits-delta ' + (delta > 0 ? 'behind' : delta < 0 ? 'ahead' : '');
+    deltaEl.className = 'splits-delta-total ' + (delta > 0 ? 'behind' : delta < 0 ? 'ahead' : '');
   }
   
   renderSegments();
