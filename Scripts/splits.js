@@ -145,6 +145,11 @@ function initSplits(gameName) {
   startTime = 0;
   pausedTime = 0;
   
+  const settings = getSettings();
+  updateSplitsPosition(settings.position);
+  updateSplitsFontSize(settings.fontSize);
+  splitsPanel.style.display = settings.visible ? 'block' : 'none';
+  
   if (gameName) {
     for (let i = 0; i < profiles.length; i++) {
       const profile = profiles[i];
@@ -248,7 +253,7 @@ function updateSplitsPosition(position) {
   settings.position = position;
   saveSettings(settings);
   
-  splitsPanel.className = 'game-overlay splits-' + position;
+  splitsPanel.className = 'game-overlay ' + position;
 }
 
 function updateSplitsFontSize(size) {
@@ -269,26 +274,33 @@ splitsPanel.querySelector('.splits-close').addEventListener('click', () => {
 document.addEventListener('keydown', e => {
   if (!window.WebMuGameActive) return;
   
+  // Ignore if user is typing in an input
+  if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
   switch (e.key) {
-    case 'F7':
+    case '1':
       e.preventDefault();
       if (!isRunning) startSplits();
       break;
-    case 'F8':
+    case '2':
       e.preventDefault();
       if (isRunning) split();
       break;
-    case 'F9':
+    case '3':
       e.preventDefault();
       resetSplits();
       break;
-    case 'F10':
+    case '4':
       e.preventDefault();
       skipSegment();
       break;
-    case 'F5':
+    case '5':
       e.preventDefault();
       switchProfile(e.shiftKey ? -1 : 1);
+      break;
+    case '6':
+      e.preventDefault();
+      toggleSplits();
       break;
   }
 });

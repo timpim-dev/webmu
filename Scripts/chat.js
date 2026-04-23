@@ -188,9 +188,8 @@ async function loadDMs() {
 
 async function loadGroups() {
   const qs = new URLSearchParams({
-    filter: `members ~ "${currentUser.id}"`,
-    sort: '-updated',
-    expand: 'members'
+    filter: filter,
+    sort: 'created',
   });
   const res = await pbRequest(`/api/collections/${PB_GROUPS_COLLECTION}/records?${qs.toString()}`, { token: authToken });
   return res.items || [];

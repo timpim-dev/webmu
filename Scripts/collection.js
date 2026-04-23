@@ -340,6 +340,11 @@ async function listGames(ownerId) {
   return items;
 }
 
+async function listCatalogGames() {
+  const res = await pbRequest(`/api/collections/catalog_games/records?perPage=200&sort=name`);
+  return res.items || [];
+}
+
 function publicGameUrl(game) {
   return null;
 }
@@ -420,10 +425,12 @@ let currentUser = null;
 let authToken = '';
 let isRegistering = false;
 let allGames = [];
+let catalogGames = [];
 let folderFiles = [];
 let coverEditGame = null;
 let coverSelectedUrl = null;
 let coverUploadedBase64 = null;
+let currentTab = 'personal';
 
 function setAuthenticatedState() {
   signinScreen.style.display = 'none';
@@ -575,10 +582,20 @@ async function loadCollection() {
   if (!currentUser) return;
   collectionContent.innerHTML = '<div class="loading-state">Loading your collection...</div>';
   allGames = await listGames(currentUser.id);
-  renderCollection(allGames, searchInput.value.trim().toLowerCase());
+  if (currentTab === 'personal') {
+    renderCollection(allGames, searchInput.value.trim().toLowerCase());
+  }
 }
 
-function renderCollection(games, query = '') {
+async function loadCatalog() {
+  collectionContent.innerHTML = '<div class="loading-state">Loading public library...</div>';
+  catalogGames = await listCatalogGames();
+  if (currentTab === 'public') {
+    renderCollection(catalogGames, searchInput.value.trim().toLowerCase(), true);
+  }
+}
+
+function renderCollection(games, query = '', isCatalog = false) {
   const filtered = query
     ? games.filter(g => String(g.name || '').toLowerCase().includes(query) || (SYSTEM_LABELS[g.system] || '').toLowerCase().includes(query))
     : games;
@@ -590,7 +607,7 @@ function renderCollection(games, query = '') {
     empty.className = 'empty-state';
     empty.innerHTML = query
       ? `<div class="empty-title">No results for "${query}"</div><p class="empty-desc">Try a different search term.</p>`
-      : `<div class="empty-title">No games yet</div><p class="empty-desc">Click "Add Game" or "Import Folder" to get started.</p>`;
+      : (isCatalog ? `<div class="empty-title">Public library is empty</div>` : `<div class="empty-title">No games yet</div><p class="empty-desc">Click "Add Game" or "Import Folder" to get started.</p>`);
     collectionContent.appendChild(empty);
     return;
   }
@@ -613,7 +630,7 @@ function renderCollection(games, query = '') {
     grid.className = 'game-grid';
 
     for (const game of grouped[system]) {
-      buildCard(game).then(card => grid.appendChild(card));
+      buildCard(game, isCatalog).then(card => grid.appendChild(card));
     }
 
     section.appendChild(header);
@@ -623,19 +640,20 @@ function renderCollection(games, query = '') {
 }
 
 searchInput.addEventListener('input', () => {
-  renderCollection(allGames, searchInput.value.trim().toLowerCase());
+  const games = currentTab === 'personal' ? allGames : catalogGames;
+  renderCollection(games, searchInput.value.trim().toLowerCase(), currentTab === 'public');
 });
 
-async function buildCard(game) {
+async function buildCard(game, isCatalog = false) {
   const card = document.createElement('div');
   card.className = 'game-card';
 
-  const romFile = await getRom(game.id);
+  const romFile = isCatalog ? null : await getRom(game.id);
   const hasRom = !!romFile;
 
   const coverHtml = game.coverUrl
-    ? `<div class="game-cover-wrap"><img class="game-cover" src="${game.coverUrl}" alt="${game.name}" loading="lazy" /><button class="game-cover-edit" data-id="${game.id}"><span class="game-cover-edit-label">Edit Cover</span></button></div>`
-    : `<div class="game-cover-wrap"><div class="game-cover-placeholder">NO ART</div><button class="game-cover-edit" data-id="${game.id}"><span class="game-cover-edit-label">Add Cover</span></button></div>`;
+    ? `<div class="game-cover-wrap"><img class="game-cover" src="${game.coverUrl}" alt="${game.name}" loading="lazy" />${!isCatalog ? `<button class="game-cover-edit" data-id="${game.id}"><span class="game-cover-edit-label">Edit Cover</span></button>` : ''}</div>`
+    : `<div class="game-cover-wrap"><div class="game-cover-placeholder">NO ART</div>${!isCatalog ? `<button class="game-cover-edit" data-id="${game.id}"><span class="game-cover-edit-label">Add Cover</span></button>` : ''}</div>`;
 
   card.innerHTML = `
     ${coverHtml}
@@ -643,60 +661,75 @@ async function buildCard(game) {
       <div class="game-name">${game.name}</div>
       <div class="game-system-badge">${SYSTEM_LABELS[game.system] || game.system}</div>
       <div class="game-actions">
-        <button class="game-play-btn" ${!hasRom ? 'disabled' : ''}>${hasRom ? 'Play' : 'No ROM'}</button>
-        <button class="game-remove-btn" title="Remove">✕</button>
+        ${isCatalog ? `
+          <button class="game-add-to-coll-btn primary">Add to My Collection</button>
+        ` : `
+          <button class="game-play-btn" ${!hasRom ? 'disabled' : ''}>${hasRom ? 'Play' : 'No ROM'}</button>
+          <button class="game-remove-btn" title="Remove">✕</button>
+        `}
       </div>
-      ${!hasRom ? `<div class="game-rom-btn">Add ROM file<input type="file" /></div>` : ''}
+      ${(!isCatalog && !hasRom) ? `<div class="game-rom-btn">Add ROM file<input type="file" /></div>` : ''}
     </div>
   `;
 
-  const playBtn = card.querySelector('.game-play-btn');
-  const removeBtn = card.querySelector('.game-remove-btn');
-  const attachInput = card.querySelector('.game-rom-btn input');
-  const editCoverBtn = card.querySelector('.game-cover-edit');
-
-  if (playBtn && hasRom) {
-    playBtn.addEventListener('click', () => {
-      const page = SYSTEM_PAGES[game.system];
-      if (!page) return;
-      const tx = idb.transaction(IDB_STORE, 'readwrite');
-      tx.objectStore(IDB_STORE).put(romFile, 'pending-launch');
-      tx.oncomplete = () => {
-        storeLaunchMeta({ gameId: game.id, name: game.name, system: game.system });
-        sessionStorage.setItem('webmu-launch-name', game.name);
-        window.location.href = page;
-      };
+  if (isCatalog) {
+    const addBtn = card.querySelector('.game-add-to-coll-btn');
+    addBtn.addEventListener('click', () => {
+      openAddModal({
+        name: game.name,
+        system: game.system,
+        coverUrl: game.coverUrl
+      });
     });
-  }
+  } else {
+    const playBtn = card.querySelector('.game-play-btn');
+    const removeBtn = card.querySelector('.game-remove-btn');
+    const attachInput = card.querySelector('.game-rom-btn input');
+    const editCoverBtn = card.querySelector('.game-cover-edit');
 
-  removeBtn.addEventListener('click', async () => {
-    if (!confirm(`Remove "${game.name}" from your collection?`)) return;
-    try {
-      await deleteGameRecord(game.id);
-      await deleteRom(game.id);
-      await loadCollection();
-    } catch (e) {
-      console.error('[remove game]', e);
-      alert('Could not remove the game. Try again.');
+    if (playBtn && hasRom) {
+      playBtn.addEventListener('click', () => {
+        const page = SYSTEM_PAGES[game.system];
+        if (!page) return;
+        const tx = idb.transaction(IDB_STORE, 'readwrite');
+        tx.objectStore(IDB_STORE).put(romFile, 'pending-launch');
+        tx.oncomplete = () => {
+          storeLaunchMeta({ gameId: game.id, name: game.name, system: game.system });
+          sessionStorage.setItem('webmu-launch-name', game.name);
+          window.location.href = page;
+        };
+      });
     }
-  });
 
-  if (attachInput) {
-    attachInput.addEventListener('change', async () => {
-      const f = attachInput.files[0];
-      if (!f) return;
+    removeBtn.addEventListener('click', async () => {
+      if (!confirm(`Remove "${game.name}" from your collection?`)) return;
       try {
-        await saveRom(game.id, f);
+        await deleteGameRecord(game.id);
+        await deleteRom(game.id);
         await loadCollection();
       } catch (e) {
-        console.error('[attach rom]', e);
-        alert('Could not save the ROM file. Try again.');
+        console.error('[remove game]', e);
+        alert('Could not remove the game. Try again.');
       }
     });
-  }
 
-  if (editCoverBtn) {
-    editCoverBtn.addEventListener('click', () => openCoverModal(game));
+    if (attachInput) {
+      attachInput.addEventListener('change', async () => {
+        const f = attachInput.files[0];
+        if (!f) return;
+        try {
+          await saveRom(game.id, f);
+          await loadCollection();
+        } catch (e) {
+          console.error('[attach rom]', e);
+          alert('Could not save the ROM file. Try again.');
+        }
+      });
+    }
+
+    if (editCoverBtn) {
+      editCoverBtn.addEventListener('click', () => openCoverModal(game));
+    }
   }
 
   return card;
@@ -820,15 +853,20 @@ coverModalSave.addEventListener('click', async () => {
   }
 });
 
-addGameBtn.addEventListener('click', () => {
-  modalGameName.value = '';
-  modalSystem.value = '';
+let modalPrefilledCover = '';
+
+function openAddModal(prefill = null) {
+  modalGameName.value = prefill?.name || '';
+  modalSystem.value = prefill?.system || '';
+  modalPrefilledCover = prefill?.coverUrl || '';
   modalRomFile.value = '';
   modalFileName.textContent = '';
   modalStatus.textContent = '';
   modalFileDrop.classList.remove('has-file');
   modalOverlay.classList.add('active');
-});
+}
+
+addGameBtn.addEventListener('click', () => openAddModal());
 
 modalClose.addEventListener('click', () => modalOverlay.classList.remove('active'));
 modalCancelBtn.addEventListener('click', () => modalOverlay.classList.remove('active'));
@@ -872,7 +910,7 @@ modalSaveBtn.addEventListener('click', async () => {
   let gameRecord = null;
 
   try {
-    const coverUrl = await fetchCover(name, system);
+    const coverUrl = modalPrefilledCover || await fetchCover(name, system);
     const payload = {
       owner: currentUser.id,
       name,
@@ -1007,11 +1045,18 @@ folderModalImport.addEventListener('click', async () => {
 const tabBar = document.getElementById('tabBar');
 const tabBtns = tabBar.querySelectorAll('.tab-btn');
 
-const publicTab = tabBar.querySelector('[data-tab="public"]');
-if (publicTab) {
-  publicTab.classList.add('disabled');
-  publicTab.title = 'Coming soon';
-  publicTab.disabled = true;
-}
+tabBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    tabBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentTab = btn.dataset.tab;
+    searchInput.value = '';
+    if (currentTab === 'personal') {
+      renderCollection(allGames);
+    } else {
+      loadCatalog();
+    }
+  });
+});
 
 bootstrapAuth();
