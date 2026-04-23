@@ -10,6 +10,7 @@ const systemSelect = document.getElementById('systemSelect');
 const gameNameInput = document.getElementById('gameNameInput');
 const romFileInput = document.getElementById('romFileInput');
 const coverUrlInput = document.getElementById('coverUrlInput');
+const publicCheck = document.getElementById('publicCheck');
 const uploadBtn = document.getElementById('uploadBtn');
 const uploadStatus = document.getElementById('uploadStatus');
 const gamesList = document.getElementById('gamesList');
@@ -101,7 +102,7 @@ async function loadGames() {
       el.innerHTML = `
         <div class="game-info">
           <div class="game-name">${game.name}</div>
-          <div class="game-system">${game.system}</div>
+          <div class="game-system">${game.system}${game.public ? ' · Public' : ''}</div>
         </div>
         <button class="btn delete-btn" data-id="${game.id}">Delete</button>
       `;
@@ -132,6 +133,7 @@ async function uploadGame() {
   const gameName = gameNameInput.value.trim();
   const romFile = romFileInput.files[0];
   const coverUrl = coverUrlInput.value.trim();
+  const isPublic = publicCheck.checked;
   
   if (!gameName || !romFile) {
     uploadStatus.textContent = 'Please fill in all required fields.';
@@ -146,10 +148,12 @@ async function uploadGame() {
     const formData = new FormData();
     formData.append('name', gameName);
     formData.append('system', system);
-    formData.append('source', romFile);
+    formData.append('romFile', romFile);
+    formData.append('source', 'manual');
     if (coverUrl) {
       formData.append('coverUrl', coverUrl);
     }
+    formData.append('public', isPublic ? 'true' : 'false');
     
     const res = await fetch(pbUrl(`/api/collections/${PB_GAMES_COLLECTION}/records`), {
       method: 'POST',
@@ -166,6 +170,7 @@ async function uploadGame() {
     gameNameInput.value = '';
     romFileInput.value = '';
     coverUrlInput.value = '';
+    publicCheck.checked = false;
     loadGames();
   } catch (e) {
     uploadStatus.textContent = 'Error: ' + e.message;
