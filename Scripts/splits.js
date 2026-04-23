@@ -206,6 +206,12 @@ function updateLoop() {
 }
 requestAnimationFrame(updateLoop);
 
+function ensurePanelInDoc() {
+  if (!document.getElementById('splits-panel') && document.body) {
+    document.body.appendChild(splitsPanel);
+  }
+}
+
 function initSplits(gameName) {
   profiles = getOrCreateProfiles();
   currentProfileIndex = 0;
@@ -214,6 +220,8 @@ function initSplits(gameName) {
   isRunning = false;
   startTime = 0;
   pausedTime = 0;
+  
+  ensurePanelInDoc();
   
   const settings = getSettings();
   updateSplitsPosition(settings.position);
@@ -315,9 +323,7 @@ function toggleSplits() {
   settings.visible = !settings.visible;
   saveSettings(settings);
   
-  if (!document.getElementById('splits-panel')) {
-    document.body.appendChild(splitsPanel);
-  }
+  ensurePanelInDoc();
   
   splitsPanel.style.display = settings.visible ? 'flex' : 'none';
   if (settings.visible) {
@@ -386,7 +392,8 @@ document.addEventListener('keydown', e => {
   }
 });
 
-document.body.appendChild(splitsPanel);
+ensurePanelInDoc();
+document.addEventListener('DOMContentLoaded', ensurePanelInDoc);
 
 document.addEventListener('DOMContentLoaded', () => {
   const overlay = document.getElementById('controls-overlay');
