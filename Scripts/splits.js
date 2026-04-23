@@ -314,8 +314,17 @@ function toggleSplits() {
   const settings = getSettings();
   settings.visible = !settings.visible;
   saveSettings(settings);
+  
+  if (!document.getElementById('splits-panel')) {
+    document.body.appendChild(splitsPanel);
+  }
+  
   splitsPanel.style.display = settings.visible ? 'flex' : 'none';
-  if (settings.visible) renderSplits();
+  if (settings.visible) {
+    updateSplitsPosition(settings.position);
+    updateSplitsFontSize(settings.fontSize);
+    renderSplits();
+  }
 }
 
 function updateSplitsPosition(position) {
@@ -323,7 +332,9 @@ function updateSplitsPosition(position) {
   settings.position = position;
   saveSettings(settings);
   
-  splitsPanel.className = 'game-overlay ' + position;
+  // Use classList instead of overwriting className to preserve speedrun-active
+  splitsPanel.classList.remove('top-left', 'top-right', 'bottom-left', 'bottom-right');
+  splitsPanel.classList.add(position);
 }
 
 function updateSplitsFontSize(size) {
