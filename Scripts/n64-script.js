@@ -133,13 +133,13 @@ function launchROM(romUrl, name) {
   launcherWrap.style.display = 'none';
   mainNav.classList.add('hidden');
   gameScreen.classList.add('active');
-  const gameName = name || 'Nintendo 64';
+const gameName = name || 'Nintendo 64';
   gameTitleEl.textContent = gameName;
   gameTopbar.classList.add('active');
   
-window.WebMuGameActive = true;
-    
-    WebMuSplits.initSplits(gameName);
+  window.WebMuGameActive = true;
+  if (window.startPlaySession) startPlaySession();
+  WebMuSplits.initSplits(gameName);
 
   const script   = document.createElement('script');
   script.src     = 'https://cdn.emulatorjs.org/stable/data/loader.js';
@@ -166,6 +166,9 @@ launchBtn.addEventListener('click', () => {
 });
 
 function closeGame() {
+  if (window.WebMuPlayTracker?.flushPlayStats) {
+    WebMuPlayTracker.flushPlayStats().catch(() => {});
+  }
   window.WebMuGameActive = false;
   window.location.reload();
 }

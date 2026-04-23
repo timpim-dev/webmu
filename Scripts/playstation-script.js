@@ -138,7 +138,7 @@ if (launchName) {
       gameTopbar.classList.add('active');
       
       window.WebMuGameActive = true;
-      
+      if (window.startPlaySession) startPlaySession();
       WebMuSplits.initSplits(gameName);
 
       const script    = document.createElement('script');
@@ -166,6 +166,9 @@ if (launchName) {
     });
 
     function closeGame() {
+      if (window.WebMuPlayTracker?.flushPlayStats) {
+        WebMuPlayTracker.flushPlayStats().catch(() => {});
+      }
       window.WebMuGameActive = false;
       window.location.reload();
     }

@@ -1,8 +1,12 @@
 const PB_CONFIG = window.__WEBMU_POCKETBASE__ || {};
 const PB_URL = PB_CONFIG.url || 'https://pocketbase.felixx.dev';
+const PB_AUTH_COLLECTION = PB_CONFIG.authCollection || 'webmuser';
 const PB_GAMES_COLLECTION = PB_CONFIG.gamesCollection || 'games';
 const SESSION_KEY = 'webmu-pocketbase-session';
 const META_KEY = 'webmu-launch-meta';
+
+let playStartTime = null;
+let flushed = false;
 
 function pbUrl(path) {
   return `${PB_URL}${path}`;
@@ -32,106 +36,104 @@ function readLaunchMeta() {
   }
 }
 
-function clearLaunchMeta() {
-  sessionStorage.removeItem(META_KEY);
-}
-
 async function pbRequest(path, { method = 'GET', token = null, body = null, keepalive = false } = {}) {
   const headers = { Accept: 'application/json' };
   if (token) headers.Authorization = token;
-
   const init = { method, headers, keepalive };
   if (body !== null) {
     headers['Content-Type'] = 'application/json';
     init.body = JSON.stringify(body);
   }
-
   const res = await fetch(pbUrl(path), init);
   const text = await res.text();
   let data = null;
   if (text) {
-    try {
-      data = JSON.parse(text);
-    } catch (_) {
-      data = { message: text };
-    }
+    try { data = JSON.parse(text); } catch (_) { data = { message: text }; }
   }
-
-  if (!res.ok) {
-    const message = data?.message || `PocketBase request failed (${res.status})`;
-    throw new Error(message);
-  }
-
+  if (!res.ok) throw new Error(data?.message || `Request failed (${res.status})`);
   return data;
 }
 
-let flushed = false;
+function startPlaySession() {
+  playStartTime = Date.now();
+  flushed = false;
+}
+
+async function listUserGames(userId, token) {
+  const items = [];
+  let page = 1;
+  let totalPages = 1;
+  do {
+    const qs = new URLSearchParams({
+      page: String(page),
+      perPage: '200',
+      filter: `owner="${userId}"`,
+    });
+    const res = await pbRequest(`/api/collections/${PB_GAMES_COLLECTION}/records?${qs.toString()}`, { token });
+    items.push(...(res.items || []));
+    totalPages = res.totalPages || 1;
+    page++;
+  } while (page <= totalPages);
+  return items;
+}
 
 async function flushPlayStats() {
-  const meta = readLaunchMeta();
-  const session = readSession();
-  
-  if (!meta || !session) {
-    if (!meta) console.warn("[play-tracker] Missing launch meta");
-    if (!session) console.warn("[play-tracker] Missing session");
-    return;
-  }
-  
   if (flushed) return;
+  flushed = true;
 
-  if (!meta.gameId) return;
+  const meta = readLaunchMeta();
+  if (!meta || !meta.gameId) return;
 
-  const startedAt = Number(meta.launchedAt || Date.now());
-  const durationSeconds = Math.max(1, Math.round((Date.now() - startedAt) / 1000));
-  
-  try {
-    const record = await pbRequest(`/api/collections/${PB_GAMES_COLLECTION}/records/${meta.gameId}`, {
-      token: session.token,
-    });
+  const session = readSession();
+  const userId = session?.record?.id || null;
+  const token = session?.token || null;
+  const durationSeconds = playStartTime
+    ? Math.max(1, Math.round((Date.now() - playStartTime) / 1000))
+    : 1;
 
-    const playCount = Number(record.playCount || 0) + 1;
-    const totalPlaySeconds = Number(record.totalPlaySeconds || 0) + durationSeconds;
+  const path = `/api/collections/${PB_GAMES_COLLECTION}/records/${meta.gameId}`;
 
-    const path = `/api/collections/${PB_GAMES_COLLECTION}/records/${meta.gameId}`;
-    const body = {
-      playCount,
-      totalPlaySeconds,
-      lastPlayedAt: new Date().toISOString(),
-    };
-
+  if (token) {
     try {
+      const record = await pbRequest(path, { token });
+      const playCount = Number(record.playCount || 0) + 1;
+      const totalPlaySeconds = Number(record.totalPlaySeconds || 0) + durationSeconds;
       await pbRequest(path, {
         method: 'PATCH',
-        token: session.token,
+        token,
         keepalive: true,
-        body,
+        body: {
+          playCount,
+          totalPlaySeconds,
+          lastPlayedAt: new Date().toISOString(),
+        },
       });
-      flushed = true;
-      clearLaunchMeta();
-    } catch (e) {
-      console.warn('[play-tracker] fetch keepalive failed, trying beacon fallback', e);
-      console.warn('[play-tracker] sendBeacon PATCH is not supported by PocketBase — beacon fires as POST and will be ignored by the server. fetch keepalive is the real save path.');
-      
-      const blob = new Blob([JSON.stringify(body)], { type: 'application/json' });
-      navigator.sendBeacon(pbUrl(path + '?_method=PATCH'), blob);
-      // We don't set flushed=true here because beacon is best-effort and we don't know if it succeeded
-    }
-  } catch (err) {
-    console.error("[play-tracker] Failed to flush play stats", err);
+    } catch (_) {}
+  }
+
+  if (userId && token && window.WebMuAchievements) {
+    try {
+      const games = await listUserGames(userId, token);
+      const totalSeconds = games.reduce((sum, g) => sum + (Number(g.totalPlaySeconds) || 0), 0);
+
+      const opts = {
+        speedrunActive: !!window.WebMuSpeedrunActive,
+        playedPublicGame: !!meta.isPublic,
+      };
+
+      WebMuAchievements.updateUserLevel(userId, totalSeconds, token);
+      const newlyUnlocked = await WebMuAchievements.checkAndUnlockAchievements(
+        userId, games, totalSeconds, opts, token
+      );
+      if (newlyUnlocked.length > 0) {
+        WebMuAchievements.showAchievementToast(newlyUnlocked);
+      }
+    } catch (_) {}
   }
 }
 
-const launchMeta = readLaunchMeta();
-if (launchMeta) {
-  window.addEventListener('pagehide', () => {
-    flushPlayStats().catch(() => {});
-  });
-
-  window.addEventListener('beforeunload', () => {
-    flushPlayStats().catch(() => {});
-  });
-}
-
+window.startPlaySession = startPlaySession;
 window.WebMuPlayTracker = {
   flushPlayStats,
+  startPlaySession,
 };

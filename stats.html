@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="color.css">
   <link rel="stylesheet" href="account.css">
   <link rel="stylesheet" href="stats.css">
+  <script src="./Scripts/achievements.js"></script>
 </head>
 <body>
 
@@ -49,7 +50,7 @@
             <span id="avatarInitials"></span>
           </div>
           <div class="profile-main">
-            <div class="eyebrow" id="userHandle">user@webmu</div>
+            <div class="eyebrow" id="userHandle">user@webmu <span id="statsLevelBadge" style="display:none;background:linear-gradient(135deg,#f97316,#fb923c);color:#fff;font-size:10px;padding:2px 8px;border-radius:12px;font-weight:bold;">LVL <span id="statsLevelNum">1</span></span></div>
             <h1 id="displayName">Username</h1>
             <p id="accountBlurb">Public stats and collection.</p>
             <div class="profile-meta">
@@ -108,6 +109,17 @@
           </div>
           <div class="library-list" id="libraryList"></div>
         </article>
+      </section>
+
+      <section class="achievements-section" id="statsAchievementsSection" style="display:none;">
+        <div class="panel-header">
+          <div>
+            <div class="panel-kicker">achievements</div>
+            <h2>Achievements</h2>
+          </div>
+          <span class="panel-note" id="statsAchievementCount">0/17</span>
+        </div>
+        <div class="achievements-grid" id="statsAchievementsGrid"></div>
       </section>
     </section>
 

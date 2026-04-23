@@ -339,6 +339,74 @@ function computeStats(games) {
   playSessions.textContent = String(totalSessions);
 }
 
+function renderLevelProgress(games, user) {
+  const levelSection = document.getElementById('levelSection');
+  const levelBadge = document.getElementById('levelBadge');
+  if (!levelSection) return;
+
+  const totalSeconds = games.reduce((sum, game) => sum + Number(game.totalPlaySeconds || 0), 0);
+  const prog = window.WebMuAchievements
+    ? WebMuAchievements.getLevelProgress(totalSeconds)
+    : { level: 1, title: 'Newcomer', progress: 0, currentSeconds: 0, currentThreshold: 0, nextThreshold: 600, isMax: false };
+
+  if (levelBadge) {
+    levelBadge.style.display = 'inline';
+    document.getElementById('levelNum').textContent = prog.level;
+  }
+
+  levelSection.style.display = '';
+  document.getElementById('levelDisplay').textContent = `LVL ${prog.level}`;
+  document.getElementById('levelTitleDisplay').textContent = prog.title;
+
+  const fill = document.getElementById('levelProgressFill');
+  fill.style.width = `${Math.round(prog.progress * 100)}%`;
+
+  const currentLabel = fmtLongDuration(prog.currentSeconds);
+  if (prog.isMax) {
+    document.getElementById('levelCurrentTime').textContent = currentLabel;
+    document.getElementById('levelNextTime').textContent = 'MAX LEVEL';
+  } else {
+    const needed = prog.nextThreshold - prog.currentSeconds;
+    document.getElementById('levelCurrentTime').textContent = currentLabel;
+    document.getElementById('levelNextTime').textContent = `Next: ${fmtLongDuration(needed)}`;
+  }
+}
+
+async function renderAchievements(userId) {
+  const achSection = document.getElementById('achievementsSection');
+  const grid = document.getElementById('achievementsGrid');
+  if (!achSection || !grid) return;
+
+  if (!window.WebMuAchievements || !authToken) {
+    achSection.style.display = 'none';
+    return;
+  }
+
+  try {
+    const unlocked = await WebMuAchievements.getUnlockedAchievements(userId, authToken);
+    const allAch = WebMuAchievements.ALL_ACHIEVEMENTS;
+    const countEl = document.getElementById('achievementCount');
+    if (countEl) countEl.textContent = `${unlocked.length}/${allAch.length} achievements`;
+
+    grid.innerHTML = '';
+    allAch.forEach(ach => {
+      const isUnlocked = unlocked.includes(ach.id);
+      const el = document.createElement('div');
+      el.className = `achievement-card ${isUnlocked ? 'unlocked' : 'locked'}`;
+      el.innerHTML = `
+        <div class="ach-icon">${isUnlocked ? ach.icon : '?'}</div>
+        <div class="ach-name">${isUnlocked ? ach.name : '???'}</div>
+        <div class="ach-desc">${isUnlocked ? ach.description : 'Keep playing to unlock'}</div>
+      `;
+      grid.appendChild(el);
+    });
+
+    achSection.style.display = '';
+  } catch (_) {
+    achSection.style.display = 'none';
+  }
+}
+
 async function persistName() {
   if (!currentUser || !authToken) return;
   const nextName = nameInput.value.trim();
@@ -401,6 +469,8 @@ async function bootstrap() {
     renderLibrary(games);
     renderActivity(games);
     renderGameSelector(games);
+    renderLevelProgress(games, user);
+    renderAchievements(user.id);
   } catch (e) {
     clearSession();
     console.error('[account]', e);

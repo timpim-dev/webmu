@@ -213,6 +213,9 @@ stateFileInput.addEventListener('change', async () => {
 });
 
 async function closeGame() {
+  if (window.WebMuPlayTracker?.flushPlayStats) {
+    WebMuPlayTracker.flushPlayStats().catch(() => {});
+  }
   if (instance) {
     try { await instance.exit(); } catch(e) {}
     instance = null;
@@ -257,7 +260,7 @@ async function launchROM(rom, name) {
     controlsOverlay.classList.add('hidden');
     
     window.WebMuGameActive = true;
-    WebMuSplits.initSplits(gameName);
+    if (window.startPlaySession) startPlaySession();
     WebMuSplits.initSplits(gameName);
   } catch (err) {
     console.error('[snes9x]', err);

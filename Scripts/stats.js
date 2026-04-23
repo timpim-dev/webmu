@@ -160,7 +160,7 @@ async function selectUser(user) {
   
   const display = user.name || user.email.split('@')[0];
   displayName.textContent = display;
-  userHandle.textContent = user.email.split('@')[0] + '@webmu';
+  userHandle.innerHTML = `${user.email.split('@')[0]}@webmu ${authToken ? `<span id="statsLevelBadge" style="display:inline;background:linear-gradient(135deg,#f97316,#fb923c);color:#fff;font-size:10px;padding:2px 8px;border-radius:12px;font-weight:bold;">LVL <span id="statsLevelNum">${user.level || 1}</span></span>` : ''}`;
   memberSince.textContent = `Member since ${fmtDate(user.created)}`;
   lastSeen.textContent = user.lastSeen ? `Last seen ${fmtDate(user.lastSeen)}` : 'No recent activity';
   
@@ -175,12 +175,46 @@ async function selectUser(user) {
     avatarInitials.textContent = display.charAt(0).toUpperCase();
   }
 
-  // Load and render stats
   try {
     const games = await loadUserStats(user.id);
     renderStats(games);
+    renderStatsAchievements(user.id, games);
   } catch (err) {
     console.error('[stats load]', err);
+  }
+}
+
+async function renderStatsAchievements(userId, games) {
+  const achSection = document.getElementById('statsAchievementsSection');
+  const grid = document.getElementById('statsAchievementsGrid');
+  const countEl = document.getElementById('statsAchievementCount');
+  if (!achSection || !grid) return;
+
+  if (!window.WebMuAchievements || !authToken) {
+    achSection.style.display = 'none';
+    return;
+  }
+
+  try {
+    const unlocked = await WebMuAchievements.getUnlockedAchievements(userId, authToken);
+    const allAch = WebMuAchievements.ALL_ACHIEVEMENTS;
+    if (countEl) countEl.textContent = `${unlocked.length}/${allAch.length}`;
+
+    grid.innerHTML = '';
+    allAch.forEach(ach => {
+      const isUnlocked = unlocked.includes(ach.id);
+      const el = document.createElement('div');
+      el.className = `achievement-card ${isUnlocked ? 'unlocked' : 'locked'}`;
+      el.innerHTML = `
+        <div class="ach-icon">${isUnlocked ? ach.icon : '?'}</div>
+        <div class="ach-name">${isUnlocked ? ach.name : '???'}</div>
+        <div class="ach-desc">${isUnlocked ? ach.description : 'Locked'}</div>
+      `;
+      grid.appendChild(el);
+    });
+    achSection.style.display = '';
+  } catch (_) {
+    achSection.style.display = 'none';
   }
 }
 

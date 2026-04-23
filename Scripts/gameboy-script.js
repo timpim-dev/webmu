@@ -213,6 +213,9 @@
   });
 
   async function closeGame() {
+    if (window.WebMuPlayTracker?.flushPlayStats) {
+      WebMuPlayTracker.flushPlayStats().catch(() => {});
+    }
     if (instance) {
       try { await instance.exit(); } catch(e) {}
       instance = null;
@@ -257,7 +260,7 @@
       controlsOverlay.classList.add('hidden'); 
       
       window.WebMuGameActive = true;
-      
+      if (window.startPlaySession) startPlaySession();
       WebMuSplits.initSplits(gameName);
     } catch (err) {
       console.error('[mGBA]', err);

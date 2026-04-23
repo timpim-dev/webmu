@@ -38,7 +38,7 @@
           <input id="avatarInput" type="file" accept="image/*" hidden />
         </div>
         <div class="profile-main">
-          <div class="eyebrow">account@webmu</div>
+          <div class="eyebrow">account@webmu <span id="levelBadge" class="level-badge" style="display:none;">LVL <span id="levelNum">1</span></span></div>
           <h1 id="displayName">Your account</h1>
           <p id="accountBlurb">Track your library, playtime, and favorite systems in one place.</p>
           <div class="profile-meta">
@@ -88,6 +88,33 @@
         <span class="stat-label">Play sessions</span>
         <span class="stat-value" id="playSessions">0</span>
       </article>
+    </section>
+
+    <section class="level-section" id="levelSection" style="display:none;">
+      <div class="level-header">
+        <div class="level-title">
+          <span class="level-number" id="levelDisplay">LVL 1</span>
+          <span class="level-name" id="levelTitleDisplay">Newcomer</span>
+        </div>
+        <span class="level-achievements" id="achievementCount">0/17 achievements</span>
+      </div>
+      <div class="level-progress-bar">
+        <div class="level-progress-fill" id="levelProgressFill"></div>
+      </div>
+      <div class="level-progress-labels">
+        <span id="levelCurrentTime">0h</span>
+        <span id="levelNextTime">Next: 10m</span>
+      </div>
+    </section>
+
+    <section class="achievements-section" id="achievementsSection" style="display:none;">
+      <div class="panel-header">
+        <div>
+          <div class="panel-kicker">achievements</div>
+          <h2>Your unlocked achievements</h2>
+        </div>
+      </div>
+      <div class="achievements-grid" id="achievementsGrid"></div>
     </section>
 
     <section class="content-grid">
@@ -160,6 +187,7 @@
     </section>
   </main>
 
+  <script src="./Scripts/achievements.js"></script>
   <script type="module" src="./Scripts/account.js"></script>
 </body>
 </html>
