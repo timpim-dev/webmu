@@ -252,12 +252,6 @@ userSearch.addEventListener('input', async () => {
   } catch (err) { console.error('[search]', err); }
 });
 
-messageBtn.addEventListener('click', () => {
-  if (selectedUserId) {
-    window.location.href = `chat.html?dm=${selectedUserId}`;
-  }
-});
-
 async function init() {
   const session = readSession();
   if (session) {
