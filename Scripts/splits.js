@@ -156,10 +156,16 @@ function renderSplits() {
   
   if (profile && profile.segments.length > 0) {
     const pbTotal = profile.segments.reduce((sum, s) => sum + (s.personalBest || 0), 0);
-    const delta = totalTime - pbTotal;
     const deltaEl = splitsPanel.querySelector('.splits-delta-total');
-    deltaEl.textContent = formatDelta(delta);
-    deltaEl.className = 'splits-delta-total ' + (delta > 0 ? 'behind' : delta < 0 ? 'ahead' : '');
+    
+    if (totalTime > 0) {
+      const delta = totalTime - pbTotal;
+      deltaEl.textContent = formatDelta(delta);
+      deltaEl.className = 'splits-delta-total ' + (delta > 0 ? 'behind' : delta < 0 ? 'ahead' : '');
+    } else {
+      deltaEl.textContent = '';
+      deltaEl.className = 'splits-delta-total';
+    }
   }
   
   renderSegments();
