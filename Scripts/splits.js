@@ -67,13 +67,15 @@ splitsPanel.style.display = 'none';
 splitsPanel.innerHTML = `
   <style>
     #splits-panel {
+      display: flex;
       flex-direction: column;
       gap: 10px;
       min-width: 220px;
       background: rgba(10, 10, 10, 0.95);
       border: 1px solid rgba(255, 255, 255, 0.1);
       font-family: monospace;
-      position: relative;
+      position: fixed !important;
+      z-index: 99999 !important;
     }
     .splits-titlebar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 5px; }
     .splits-profile-name { font-weight: bold; color: var(--accent, #fff); font-size: 12px; }
