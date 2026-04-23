@@ -143,6 +143,9 @@ function renderSegments() {
 }
 
 function renderSplits() {
+  const settings = getSettings();
+  if (!settings.visible) return;
+
   const profile = profiles[currentProfileIndex];
   if (!profile) return;
   
@@ -161,6 +164,15 @@ function renderSplits() {
   
   renderSegments();
 }
+
+// Continuous update loop
+function updateLoop() {
+  if (isRunning) {
+    renderSplits();
+  }
+  requestAnimationFrame(updateLoop);
+}
+requestAnimationFrame(updateLoop);
 
 function initSplits(gameName) {
   profiles = getOrCreateProfiles();
