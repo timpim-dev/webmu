@@ -61,7 +61,7 @@ let pausedTime = 0;
 const splitsPanel = document.createElement('div');
 splitsPanel.id = 'splits-panel';
 splitsPanel.className = 'game-overlay';
-splitsPanel.style.display = 'none';
+splitsPanel.style.display = settings.visible ? 'flex' : 'none';
 splitsPanel.innerHTML = `
   <div class="splits-titlebar">
     <span class="splits-profile-name">Default</span>
@@ -294,6 +294,23 @@ document.addEventListener('keydown', e => {
 });
 
 document.body.appendChild(splitsPanel);
+
+document.addEventListener('DOMContentLoaded', () => {
+  const overlay = document.getElementById('controls-overlay');
+  if (overlay) {
+    const sep = document.createElement('div');
+    sep.className = 'ov-sep';
+    const btn = document.createElement('button');
+    btn.className = 'ov-btn';
+    btn.textContent = 'Splits';
+    btn.addEventListener('click', toggleSplits);
+    const actions = overlay.querySelector('.overlay-actions');
+    if (actions) {
+      actions.appendChild(sep);
+      actions.appendChild(btn);
+    }
+  }
+});
 
 window.WebMuSplits = {
   initSplits,

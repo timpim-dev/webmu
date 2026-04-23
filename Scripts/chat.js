@@ -142,26 +142,45 @@ function fmtTime(dateStr) {
 
 // Chat Management
 async function loadDMs() {
-  // Find users I've messaged or who messaged me
   const qs = new URLSearchParams({
     filter: `sender="${currentUser.id}" || recipient="${currentUser.id}"`,
     sort: '-created',
     perPage: '100',
-    expand: 'sender,recipient'
   });
-  const res = await pbRequest(`/api/collections/${PB_MESSAGES_COLLECTION}/records?${qs.toString()}`, { token: authToken });
+  const res = await pbRequest(
+    `/api/collections/${PB_MESSAGES_COLLECTION}/records?${qs.toString()}`,
+    { token: authToken }
+  );
   const messages = res.items || [];
   
+  const userIds = new Set();
+  messages.forEach(msg => {
+    if (msg.sender !== currentUser.id) userIds.add(msg.sender);
+    if (msg.recipient && msg.recipient !== currentUser.id) userIds.add(msg.recipient);
+  });
+
+  // fetch user details individually
+  const userCache = {};
+  await Promise.all([...userIds].map(async id => {
+    try {
+      userCache[id] = await pbRequest(
+        `/api/collections/${PB_AUTH_COLLECTION}/records/${id}`,
+        { token: authToken }
+      );
+    } catch (_) {}
+  }));
+
   const userMap = new Map();
   messages.forEach(msg => {
-    const other = msg.sender === currentUser.id ? msg.expand.recipient : msg.expand.sender;
-    if (other && other.id !== currentUser.id && !userMap.has(other.id)) {
-      userMap.set(other.id, {
-        user: other,
-        lastMsg: msg.text || (msg.imageUrl ? '📷 Image' : ''),
-        time: msg.created
-      });
-    }
+    const otherId = msg.sender === currentUser.id ? msg.recipient : msg.sender;
+    if (!otherId || otherId === currentUser.id || userMap.has(otherId)) return;
+    const other = userCache[otherId];
+    if (!other) return;
+    userMap.set(otherId, {
+      user: other,
+      lastMsg: msg.text || (msg.imageUrl ? '📷 Image' : ''),
+      time: msg.created
+    });
   });
   
   return [...userMap.values()];
