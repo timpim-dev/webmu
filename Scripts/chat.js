@@ -82,8 +82,31 @@ async function getGroupAESKey(groupId) {
   return await CryptoUtils.importAESKey(jwkStr);
 }
 
-function decryptMessageData(msg) {
-  return { text: msg.text || '', imageUrl: msg.imageUrl || '' };
+async function decryptMessageData(msg) {
+  try {
+    if (!msg.text && !msg.imageUrl) return { text: '', imageUrl: '' };
+    
+    if (msg.group) {
+      const key = await getGroupAESKey(msg.group);
+      const text = msg.text ? CryptoUtils.bufferToText(await CryptoUtils.decryptAES(key, CryptoUtils.base64ToBuffer(msg.text), CryptoUtils.base64ToBuffer(msg.iv))) : '';
+      const imageUrl = msg.imageUrl ? CryptoUtils.bufferToText(await CryptoUtils.decryptAES(key, CryptoUtils.base64ToBuffer(msg.imageUrl), CryptoUtils.base64ToBuffer(msg.iv))) : '';
+      return { text, imageUrl };
+    } else {
+      // DM fallback: try to decrypt with own private key
+      try {
+        const text = msg.text ? CryptoUtils.bufferToText(await CryptoUtils.decryptRSA(userPrivateKey, CryptoUtils.base64ToBuffer(msg.text))) : '';
+        const imageUrl = msg.imageUrl ? CryptoUtils.bufferToText(await CryptoUtils.decryptRSA(userPrivateKey, CryptoUtils.base64ToBuffer(msg.imageUrl))) : '';
+        return { text, imageUrl };
+      } catch (e) {
+        // If decryption fails, maybe it was sent by us and we didn't encrypt it for ourselves?
+        // Or it's plain text from before E2EE was enabled.
+        return { text: msg.text || '', imageUrl: msg.imageUrl || '', isUnencrypted: true };
+      }
+    }
+  } catch (e) {
+    console.error('Decryption failed', e);
+    return { text: '[Encrypted Message]', imageUrl: '' };
+  }
 }
 
 let currentTab = 'dms';
@@ -188,7 +211,7 @@ async function loadDMs() {
 
 async function loadGroups() {
   const qs = new URLSearchParams({
-    filter: filter,
+    filter: `members ~ "${currentUser.id}"`,
     sort: 'created',
   });
   const res = await pbRequest(`/api/collections/${PB_GROUPS_COLLECTION}/records?${qs.toString()}`, { token: authToken });
@@ -282,8 +305,9 @@ async function loadMessages() {
     const res = await pbRequest(`/api/collections/${PB_MESSAGES_COLLECTION}/records?${qs.toString()}`, { token: authToken });
     const messages = res.items || [];
     
-    // Only re-render if we have new messages
-    if (messages.length > 0 && messages[messages.length - 1].id === lastMessageId) return;
+    // Check if we actually need to re-render
+    const currentMsgCount = messageList.querySelectorAll('.message').length;
+    if (messages.length > 0 && messages[messages.length - 1].id === lastMessageId && currentMsgCount === messages.length) return;
     
     messageList.innerHTML = '';
     for (const msg of messages) {
@@ -384,14 +408,26 @@ async function sendMessage() {
 
     const body = {
       sender: currentUser.id,
-      text: text,
-      imageUrl: imageUrl,
     };
 
     if (activeChatType === 'dm') {
       body.recipient = activeChatId;
+      const recipientPub = await getRemotePublicKey(activeChatId);
+      if (text) body.text = CryptoUtils.bufferToBase64(await CryptoUtils.encryptRSA(recipientPub, CryptoUtils.textToBuffer(text)));
+      if (imageUrl) body.imageUrl = CryptoUtils.bufferToBase64(await CryptoUtils.encryptRSA(recipientPub, CryptoUtils.textToBuffer(imageUrl)));
     } else {
       body.group = activeChatId;
+      const groupKey = await getGroupAESKey(activeChatId);
+      if (text) {
+        const enc = await CryptoUtils.encryptAES(groupKey, CryptoUtils.textToBuffer(text));
+        body.text = CryptoUtils.bufferToBase64(enc.encrypted);
+        body.iv = CryptoUtils.bufferToBase64(enc.iv);
+      }
+      if (imageUrl) {
+        const enc = await CryptoUtils.encryptAES(groupKey, CryptoUtils.textToBuffer(imageUrl));
+        body.imageUrl = CryptoUtils.bufferToBase64(enc.encrypted);
+        body.iv = CryptoUtils.bufferToBase64(enc.iv);
+      }
     }
     
     const url = editingMessageId 
@@ -543,6 +579,8 @@ async function init() {
   }
   authToken = session.token;
   currentUser = session.record;
+
+  await initEncryption();
 
   const urlParams = new URLSearchParams(window.location.search);
   const dmId = urlParams.get('dm');
