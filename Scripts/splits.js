@@ -58,6 +58,8 @@ let currentSegment = 0;
 let segmentTimes = [];
 let pausedTime = 0;
 
+let speedrunMode = false;
+
 const splitsPanel = document.createElement('div');
 splitsPanel.id = 'splits-panel';
 splitsPanel.className = 'game-overlay';
@@ -71,9 +73,13 @@ splitsPanel.innerHTML = `
       background: rgba(10, 10, 10, 0.95);
       border: 1px solid rgba(255, 255, 255, 0.1);
       font-family: monospace;
+      position: relative;
     }
     .splits-titlebar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 5px; }
     .splits-profile-name { font-weight: bold; color: var(--accent, #fff); font-size: 12px; }
+    .splits-actions { display: flex; gap: 8px; align-items: center; }
+    .speedrun-toggle { background: #333; border: 1px solid #555; color: #aaa; font-size: 9px; padding: 2px 4px; border-radius: 3px; cursor: pointer; text-transform: uppercase; }
+    .speedrun-toggle.active { background: #f87171; border-color: #ef4444; color: #fff; }
     .splits-close { background: none; border: none; color: #fff; cursor: pointer; font-size: 16px; padding: 0 5px; }
     .splits-timer { font-size: 28px; font-weight: bold; text-align: center; color: #fff; margin: 5px 0; }
     .splits-delta-total { text-align: center; font-size: 14px; height: 1.2em; }
@@ -88,10 +94,20 @@ splitsPanel.innerHTML = `
     .seg-delta.ahead { color: #4ade80; }
     .seg-delta.behind { color: #f87171; }
     .splits-footer { font-size: 10px; color: #888; text-align: center; margin-top: 5px; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 5px; }
+    .speedrun-watermark { 
+      display: none; position: absolute; top: -20px; right: 0; 
+      font-size: 10px; font-weight: bold; color: #f87171; text-transform: uppercase; 
+      letter-spacing: 0.1em; pointer-events: none;
+    }
+    #splits-panel.speedrun-active .speedrun-watermark { display: block; }
   </style>
+  <div class="speedrun-watermark">Speedrun Active</div>
   <div class="splits-titlebar">
     <span class="splits-profile-name">Default</span>
-    <button class="splits-close">&times;</button>
+    <div class="splits-actions">
+      <button class="speedrun-toggle" title="Toggle Speedrun Mode">Speedrun</button>
+      <button class="splits-close">&times;</button>
+    </div>
   </div>
   <div class="splits-timer">00:00.000</div>
   <div class="splits-delta-total"></div>
@@ -100,6 +116,16 @@ splitsPanel.innerHTML = `
     <span class="splits-key-hint">1 Start · 2 Split · 3 Reset · 4 Skip · 5 Prof · 6 View</span>
   </div>
 `;
+
+function toggleSpeedrun() {
+  speedrunMode = !speedrunMode;
+  window.WebMuSpeedrunActive = speedrunMode;
+  const btn = splitsPanel.querySelector('.speedrun-toggle');
+  btn.classList.toggle('active', speedrunMode);
+  splitsPanel.classList.toggle('speedrun-active', speedrunMode);
+}
+
+splitsPanel.querySelector('.speedrun-toggle').addEventListener('click', toggleSpeedrun);
 
 function formatTime(ms) {
   if (!ms || ms <= 0) return '00:00.000';

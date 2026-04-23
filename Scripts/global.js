@@ -85,4 +85,14 @@ function applyTheme(theme) {
   } else {
     checkAdminNav();
   }
+
+  // Speedrun keyblocker
+  window.addEventListener('keydown', e => {
+    if (window.WebMuSpeedrunActive && (e.code === 'Space' || e.key === ' ' || e.code === 'KeyR' || e.key === 'r' || e.key === 'R')) {
+      if (window.WebMuGameActive) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    }
+  }, true); // Use capture phase to block before emulator sees it
 })();
