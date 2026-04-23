@@ -319,17 +319,23 @@ function switchProfile(delta) {
 }
 
 function toggleSplits() {
+  console.log('[splits] toggleSplits called');
   const settings = getSettings();
   settings.visible = !settings.visible;
   saveSettings(settings);
   
   ensurePanelInDoc();
   
-  splitsPanel.style.display = settings.visible ? 'flex' : 'none';
   if (settings.visible) {
+    splitsPanel.style.display = 'flex';
+    // Force refresh position and size
     updateSplitsPosition(settings.position);
     updateSplitsFontSize(settings.fontSize);
     renderSplits();
+    console.log('[splits] Panel should be visible now at:', settings.position);
+  } else {
+    splitsPanel.style.display = 'none';
+    console.log('[splits] Panel hidden');
   }
 }
 
@@ -359,10 +365,21 @@ splitsPanel.querySelector('.splits-close').addEventListener('click', () => {
 });
 
 document.addEventListener('keydown', e => {
-  if (!window.WebMuGameActive) return;
-  
   // Ignore if user is typing in an input
   if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+  // Key 6 (Toggle) should work on any page with a game overlay/controls
+  if (e.key === '6') {
+    const hasControls = !!document.getElementById('controls-overlay');
+    const hasSplits = !!window.WebMuSplits;
+    if (hasControls || hasSplits) {
+      e.preventDefault();
+      toggleSplits();
+      return;
+    }
+  }
+
+  if (!window.WebMuGameActive) return;
 
   switch (e.key) {
     case '1':
@@ -384,10 +401,6 @@ document.addEventListener('keydown', e => {
     case '5':
       e.preventDefault();
       switchProfile(e.shiftKey ? -1 : 1);
-      break;
-    case '6':
-      e.preventDefault();
-      toggleSplits();
       break;
   }
 });
