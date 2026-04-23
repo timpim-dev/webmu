@@ -61,8 +61,34 @@ let pausedTime = 0;
 const splitsPanel = document.createElement('div');
 splitsPanel.id = 'splits-panel';
 splitsPanel.className = 'game-overlay';
-splitsPanel.style.display = settings.visible ? 'flex' : 'none';
+splitsPanel.style.display = 'none';
 splitsPanel.innerHTML = `
+  <style>
+    #splits-panel {
+      flex-direction: column;
+      gap: 10px;
+      min-width: 220px;
+      background: rgba(10, 10, 10, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-family: monospace;
+    }
+    .splits-titlebar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 5px; }
+    .splits-profile-name { font-weight: bold; color: var(--accent, #fff); font-size: 12px; }
+    .splits-close { background: none; border: none; color: #fff; cursor: pointer; font-size: 16px; padding: 0 5px; }
+    .splits-timer { font-size: 28px; font-weight: bold; text-align: center; color: #fff; margin: 5px 0; }
+    .splits-delta-total { text-align: center; font-size: 14px; height: 1.2em; }
+    .splits-delta-total.ahead { color: #4ade80; }
+    .splits-delta-total.behind { color: #f87171; }
+    .splits-segment-list { display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto; }
+    .split-segment { display: flex; justify-content: space-between; font-size: 12px; padding: 2px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+    .split-segment.current { background: rgba(255, 255, 255, 0.1); }
+    .seg-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .seg-time { width: 80px; text-align: right; }
+    .seg-delta { width: 70px; text-align: right; font-size: 11px; }
+    .seg-delta.ahead { color: #4ade80; }
+    .seg-delta.behind { color: #f87171; }
+    .splits-footer { font-size: 10px; color: #888; text-align: center; margin-top: 5px; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 5px; }
+  </style>
   <div class="splits-titlebar">
     <span class="splits-profile-name">Default</span>
     <button class="splits-close">&times;</button>
@@ -71,7 +97,7 @@ splitsPanel.innerHTML = `
   <div class="splits-delta-total"></div>
   <div class="splits-segment-list"></div>
   <div class="splits-footer">
-    <span class="splits-key-hint">F7 Start · F8 Split · F9 Reset · F10 Skip</span>
+    <span class="splits-key-hint">1 Start · 2 Split · 3 Reset · 4 Skip · 5 Prof · 6 View</span>
   </div>
 `;
 
@@ -148,7 +174,7 @@ function initSplits(gameName) {
   const settings = getSettings();
   updateSplitsPosition(settings.position);
   updateSplitsFontSize(settings.fontSize);
-  splitsPanel.style.display = settings.visible ? 'block' : 'none';
+  splitsPanel.style.display = settings.visible ? 'flex' : 'none';
   
   if (gameName) {
     for (let i = 0; i < profiles.length; i++) {
@@ -244,7 +270,7 @@ function toggleSplits() {
   const settings = getSettings();
   settings.visible = !settings.visible;
   saveSettings(settings);
-  splitsPanel.style.display = settings.visible ? 'block' : 'none';
+  splitsPanel.style.display = settings.visible ? 'flex' : 'none';
   if (settings.visible) renderSplits();
 }
 
