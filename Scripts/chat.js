@@ -86,26 +86,36 @@ async function decryptMessageData(msg) {
   try {
     if (!msg.text && !msg.imageUrl) return { text: '', imageUrl: '' };
     
+    const isSent = msg.sender === currentUser.id;
+
     if (msg.group) {
       const key = await getGroupAESKey(msg.group);
       const text = msg.text ? CryptoUtils.bufferToText(await CryptoUtils.decryptAES(key, CryptoUtils.base64ToBuffer(msg.text), CryptoUtils.base64ToBuffer(msg.iv))) : '';
       const imageUrl = msg.imageUrl ? CryptoUtils.bufferToText(await CryptoUtils.decryptAES(key, CryptoUtils.base64ToBuffer(msg.imageUrl), CryptoUtils.base64ToBuffer(msg.iv))) : '';
       return { text, imageUrl };
     } else {
-      // DM fallback: try to decrypt with own private key
+      // DM: Try to decrypt based on role
       try {
-        const text = msg.text ? CryptoUtils.bufferToText(await CryptoUtils.decryptRSA(userPrivateKey, CryptoUtils.base64ToBuffer(msg.text))) : '';
-        const imageUrl = msg.imageUrl ? CryptoUtils.bufferToText(await CryptoUtils.decryptRSA(userPrivateKey, CryptoUtils.base64ToBuffer(msg.imageUrl))) : '';
+        const encryptedData = (isSent && msg.senderText) ? msg.senderText : msg.text;
+        if (!encryptedData) return { text: msg.text || '', imageUrl: msg.imageUrl || '', isUnencrypted: true };
+        
+        const text = CryptoUtils.bufferToText(await CryptoUtils.decryptRSA(userPrivateKey, CryptoUtils.base64ToBuffer(encryptedData)));
+        // Image for DMs: currently we only have one imageUrl field. 
+        // If it fails to decrypt, it was probably encrypted for the other person.
+        let imageUrl = '';
+        try {
+          if (msg.imageUrl) imageUrl = CryptoUtils.bufferToText(await CryptoUtils.decryptRSA(userPrivateKey, CryptoUtils.base64ToBuffer(msg.imageUrl)));
+        } catch (_) {}
+        
         return { text, imageUrl };
       } catch (e) {
-        // If decryption fails, maybe it was sent by us and we didn't encrypt it for ourselves?
-        // Or it's plain text from before E2EE was enabled.
+        // Fallback for unencrypted or missing sender copies
         return { text: msg.text || '', imageUrl: msg.imageUrl || '', isUnencrypted: true };
       }
     }
   } catch (e) {
     console.error('Decryption failed', e);
-    return { text: '[Encrypted Message]', imageUrl: '' };
+    return { text: msg.text || '[Decryption Error]', imageUrl: '' };
   }
 }
 
@@ -196,7 +206,7 @@ async function loadDMs() {
   const userMap = new Map();
   messages.forEach(msg => {
     const otherId = msg.sender === currentUser.id ? msg.recipient : msg.sender;
-    if (!otherId || otherId === currentUser.id || userMap.has(otherId)) return;
+    if (!otherId || userMap.has(otherId)) return;
     const other = userCache[otherId];
     if (!other) return;
     userMap.set(otherId, {
@@ -413,8 +423,17 @@ async function sendMessage() {
     if (activeChatType === 'dm') {
       body.recipient = activeChatId;
       const recipientPub = await getRemotePublicKey(activeChatId);
-      if (text) body.text = CryptoUtils.bufferToBase64(await CryptoUtils.encryptRSA(recipientPub, CryptoUtils.textToBuffer(text)));
-      if (imageUrl) body.imageUrl = CryptoUtils.bufferToBase64(await CryptoUtils.encryptRSA(recipientPub, CryptoUtils.textToBuffer(imageUrl)));
+      const senderPub = userPublicKey; // or re-fetch own pub key if needed
+
+      if (text) {
+        body.text = CryptoUtils.bufferToBase64(await CryptoUtils.encryptRSA(recipientPub, CryptoUtils.textToBuffer(text)));
+        body.senderText = CryptoUtils.bufferToBase64(await CryptoUtils.encryptRSA(senderPub, CryptoUtils.textToBuffer(text)));
+      }
+      if (imageUrl) {
+        body.imageUrl = CryptoUtils.bufferToBase64(await CryptoUtils.encryptRSA(recipientPub, CryptoUtils.textToBuffer(imageUrl)));
+        // Note: For now we don't have senderImageUrl, so we just use the same imageUrl field. 
+        // We might need to store images unencrypted or use shared AES for DMs too if we want full multi-device.
+      }
     } else {
       body.group = activeChatId;
       const groupKey = await getGroupAESKey(activeChatId);
