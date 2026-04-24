@@ -196,6 +196,11 @@
       a.download = (gameTitleEl.textContent || 'game') + '.state';
       a.click();
       URL.revokeObjectURL(url);
+      
+      const gameName = gameTitleEl.textContent || 'game';
+      const system = 'gameboy';
+      const saved = await WebMuGameSaves.saveStateToPB(gameName, system, state, 'Manual');
+      if (saved) setStatus('Saved to cloud');
     } catch (e) {
       console.error('[saveState]', e);
     }
@@ -262,6 +267,21 @@
       window.WebMuGameActive = true;
       if (window.startPlaySession) startPlaySession();
       WebMuSplits.initSplits(gameName);
+      
+      const saveData = await WebMuGameSaves.loadStateFromPB(gameName, 'gameboy');
+      if (saveData) {
+        try {
+          const res = await fetch(saveData.url);
+          if (res.ok) {
+            const blob = await res.blob();
+            const file = new File([blob], `${gameName}.state`, { type: 'application/octet-stream' });
+            await instance.loadState(file);
+            setStatus('Loaded save from cloud');
+          }
+        } catch (e) {
+          console.warn('[auto-load]', e);
+        }
+      }
     } catch (err) {
       console.error('[mGBA]', err);
       setStatus('Launch failed: ' + (err?.message || String(err)));

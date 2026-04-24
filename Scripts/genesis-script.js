@@ -196,6 +196,10 @@ saveStateBtn.addEventListener('click', async () => {
     a.download = (gameTitleEl.textContent || 'game') + '.state';
     a.click();
     URL.revokeObjectURL(url);
+    
+    const gameName = gameTitleEl.textContent || 'game';
+    const saved = await WebMuGameSaves.saveStateToPB(gameName, 'genesis', state, 'Manual');
+    if (saved) setStatus('Saved to cloud');
   } catch (e) {
     console.error('[saveState]', e);
   }
@@ -274,6 +278,21 @@ async function launchROM(rom, name) {
     window.WebMuGameActive = true;
     if (window.startPlaySession) startPlaySession();
     WebMuSplits.initSplits(gameName);
+    
+    const saveData = await WebMuGameSaves.loadStateFromPB(gameName, 'genesis');
+    if (saveData) {
+      try {
+        const res = await fetch(saveData.url);
+        if (res.ok) {
+          const blob = await res.blob();
+          const file = new File([blob], `${gameName}.state`, { type: 'application/octet-stream' });
+          await instance.loadState(file);
+          setStatus('Loaded save from cloud');
+        }
+      } catch (e) {
+        console.warn('[auto-load]', e);
+      }
+    }
   } catch (err) {
     console.error('[genesis_plus_gx]', err);
     setStatus('Launch failed: ' + (err?.message || String(err)));

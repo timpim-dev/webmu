@@ -165,13 +165,14 @@ async function selectUser(user) {
   lastSeen.textContent = user.lastSeen ? `Last seen ${fmtDate(user.lastSeen)}` : 'No recent activity';
   
   const photo = user.photoBase64 || user.photoURL || '';
+  profileAvatar.src = '';
+  profileAvatar.style.display = 'none';
+  avatarInitials.textContent = '';
   if (photo) {
     profileAvatar.src = photo;
     profileAvatar.style.display = 'block';
     avatarInitials.textContent = '';
   } else {
-    profileAvatar.src = '';
-    profileAvatar.style.display = 'none';
     avatarInitials.textContent = display.charAt(0).toUpperCase();
   }
 
